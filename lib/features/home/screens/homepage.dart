@@ -326,7 +326,7 @@ class _HeroSection extends StatelessWidget {
                       color: AppColors.secondary,
                     ),
                     Text(
-                      'No streed address required',
+                      'No street address required.',
                       style: TextStyle(
                         fontSize: AppTextSizes.small.sp,
                         fontWeight: FontWeight.w500,
