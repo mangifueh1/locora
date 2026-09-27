@@ -3,7 +3,6 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mapbox_maps_flutter/mapbox_maps_flutter.dart' hide Size;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:locora/core/config/app_config.dart';
 import 'package:locora/core/routing/app_router.dart';
@@ -21,21 +20,14 @@ class LocoraApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ScreenUtilInit(
-      designSize: const Size(1280, 800),
-      minTextAdapt: true,
-      splitScreenMode: true,
-      builder: (context, child) {
-        return MaterialApp.router(
-          debugShowCheckedModeBanner: false,
-          title: 'Locora',
-          theme: ThemeData(
-            colorScheme: AppColors.lightColorScheme,
-            textTheme: GoogleFonts.interTextTheme(),
-          ),
-          routerConfig: appRouter,
-        );
-      },
+    return MaterialApp.router(
+      debugShowCheckedModeBanner: false,
+      title: 'Locora',
+      theme: ThemeData(
+        colorScheme: AppColors.lightColorScheme,
+        textTheme: GoogleFonts.interTextTheme(),
+      ),
+      routerConfig: appRouter,
     );
   }
 }

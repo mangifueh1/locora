@@ -22,12 +22,15 @@ class DeliveryDetailScreen extends ConsumerWidget {
     final tracking = ref.watch(liveDeliveryControllerProvider(deliveryId));
 
     return Scaffold(
-      appBar: AppBar(title: Text('Delivery $deliveryId')),
+      appBar: AppBar(
+        title: Text('Delivery $deliveryId', overflow: TextOverflow.ellipsis),
+      ),
       body: delivery.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) =>
             Center(child: Text('Could not load delivery: $error')),
         data: (item) {
+          final compact = MediaQuery.sizeOf(context).width < 440;
           final hasCustomerLocation =
               item.customerLat != null && item.customerLng != null;
 
@@ -75,11 +78,9 @@ class DeliveryDetailScreen extends ConsumerWidget {
 
               Padding(
                 padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: tracking.isSharing
+                child: compact
+                    ? _DeliveryActionButtons(
+                        onStart: tracking.isSharing
                             ? null
                             : () => ref
                                   .read(
@@ -87,17 +88,7 @@ class DeliveryDetailScreen extends ConsumerWidget {
                                         .notifier,
                                   )
                                   .start(),
-                        child: Text(
-                          tracking.isSharing
-                              ? 'Sharing location'
-                              : 'Start delivery',
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: tracking.isSharing
+                        onDelivered: tracking.isSharing
                             ? () => ref
                                   .read(
                                     liveDeliveryControllerProvider(deliveryId)
@@ -105,11 +96,45 @@ class DeliveryDetailScreen extends ConsumerWidget {
                                   )
                                   .stop()
                             : null,
-                        child: const Text('Mark delivered'),
+                        isSharing: tracking.isSharing,
+                      )
+                    : Row(
+                        children: [
+                          Expanded(
+                            child: FilledButton(
+                              onPressed: tracking.isSharing
+                                  ? null
+                                  : () => ref
+                                        .read(
+                                          liveDeliveryControllerProvider(
+                                            deliveryId,
+                                          ).notifier,
+                                        )
+                                        .start(),
+                              child: Text(
+                                tracking.isSharing
+                                    ? 'Sharing location'
+                                    : 'Start delivery',
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: tracking.isSharing
+                                  ? () => ref
+                                        .read(
+                                          liveDeliveryControllerProvider(
+                                            deliveryId,
+                                          ).notifier,
+                                        )
+                                        .stop()
+                                  : null,
+                              child: const Text('Mark delivered'),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
-                ),
               ),
 
               if (tracking.error != null)
@@ -130,4 +155,37 @@ class DeliveryDetailScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+class _DeliveryActionButtons extends StatelessWidget {
+  const _DeliveryActionButtons({
+    required this.onStart,
+    required this.onDelivered,
+    required this.isSharing,
+  });
+
+  final VoidCallback? onStart;
+  final VoidCallback? onDelivered;
+  final bool isSharing;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    children: [
+      SizedBox(
+        width: double.infinity,
+        child: FilledButton(
+          onPressed: onStart,
+          child: Text(isSharing ? 'Sharing location' : 'Start delivery'),
+        ),
+      ),
+      const SizedBox(height: 8),
+      SizedBox(
+        width: double.infinity,
+        child: OutlinedButton(
+          onPressed: onDelivered,
+          child: const Text('Mark delivered'),
+        ),
+      ),
+    ],
+  );
 }

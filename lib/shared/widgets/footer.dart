@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 
@@ -25,6 +24,7 @@ class LocoraFooter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compactViewport = MediaQuery.sizeOf(context).width < 780;
     final homePressed = onHomePressed ?? () => context.go('/');
     final contactPressed = onContactPressed ?? () => context.go('/contact');
     final loginPressed = onLoginPressed ?? () => context.go('/login');
@@ -40,19 +40,21 @@ class LocoraFooter extends StatelessWidget {
           ),
         ),
       ),
-      padding: EdgeInsets.fromLTRB(65.w, 38.h, 65.w, 34.h),
+      padding: compactViewport
+          ? const EdgeInsets.fromLTRB(20, 28, 20, 24)
+          : EdgeInsets.fromLTRB(65, 38, 65, 34),
       child: Column(
         children: [
           LayoutBuilder(
             builder: (context, constraints) {
-              final isCompact = constraints.maxWidth < 780.w;
+              final isCompact = constraints.maxWidth < 780;
 
               if (isCompact) {
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const _FooterBrand(),
-                    SizedBox(height: 28.h),
+                    SizedBox(height: 28),
                     _FooterLinks(
                       onHomePressed: homePressed,
                       onContactPressed: contactPressed,
@@ -82,20 +84,20 @@ class LocoraFooter extends StatelessWidget {
               );
             },
           ),
-          SizedBox(height: 42.h),
+          SizedBox(height: 42),
           Divider(
             height: 1,
             thickness: 1,
             color: AppColors.outlineVariant.withValues(alpha: 0.35),
           ),
-          SizedBox(height: 26.h),
+          SizedBox(height: 26),
           LayoutBuilder(
             builder: (context, constraints) {
-              final isCompact = constraints.maxWidth < 560.w;
+              final isCompact = constraints.maxWidth < 560;
               final copyright = Text(
                 '\u00A9 2025 Locora Technologies Inc. All rights reserved.',
                 style: TextStyle(
-                  fontSize: 9.sp,
+                  fontSize: 9,
                   fontWeight: FontWeight.w500,
                   color: AppColors.onSurfaceVariant,
                 ),
@@ -106,7 +108,7 @@ class LocoraFooter extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     copyright,
-                    SizedBox(height: 18.h),
+                    SizedBox(height: 18),
                     const FooterStatusBadge(),
                   ],
                 );
@@ -131,27 +133,27 @@ class FooterStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+      padding: EdgeInsets.symmetric(horizontal: 10, vertical: 5),
       decoration: BoxDecoration(
         color: AppColors.secondaryContainer.withValues(alpha: 0.48),
-        borderRadius: BorderRadius.circular(4.r),
+        borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Container(
-            width: 7.r,
-            height: 7.r,
+            width: 7,
+            height: 7,
             decoration: const BoxDecoration(
               color: AppColors.secondary,
               shape: BoxShape.circle,
             ),
           ),
-          SizedBox(width: 7.w),
+          SizedBox(width: 7),
           Text(
             'Operational Precision',
             style: TextStyle(
-              fontSize: 9.sp,
+              fontSize: 9,
               fontWeight: FontWeight.w600,
               color: AppColors.onSecondaryContainer,
             ),
@@ -172,15 +174,15 @@ class _FooterBrand extends StatelessWidget {
       children: [
         SvgPicture.asset(
           'assets/icons/locora_icon.svg',
-          width: 92.w,
-          height: 23.h,
+          width: 92,
+          height: 23,
           fit: BoxFit.contain,
         ),
-        SizedBox(height: 8.h),
+        SizedBox(height: 8),
         Text(
           'Deliver to the exact place.',
           style: TextStyle(
-            fontSize: 10.sp,
+            fontSize: 10,
             fontWeight: FontWeight.w500,
             color: AppColors.onSurfaceVariant,
           ),
@@ -212,8 +214,8 @@ class _FooterLinks extends StatelessWidget {
     return Wrap(
       alignment: WrapAlignment.end,
       runAlignment: WrapAlignment.end,
-      spacing: 30.w,
-      runSpacing: 14.h,
+      spacing: 30,
+      runSpacing: 14,
       children: [
         FooterLink(label: 'Home', isActive: true, onPressed: onHomePressed),
         FooterLink(label: 'Contact', onPressed: onContactPressed),
@@ -242,13 +244,13 @@ class FooterLink extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onPressed,
-      borderRadius: BorderRadius.circular(4.r),
+      borderRadius: BorderRadius.circular(4),
       child: Padding(
-        padding: EdgeInsets.symmetric(vertical: 5.h),
+        padding: EdgeInsets.symmetric(vertical: 5),
         child: Text(
           label,
           style: TextStyle(
-            fontSize: 10.sp,
+            fontSize: 10,
             fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
             color: isActive ? AppColors.primary : AppColors.onSurfaceVariant,
           ),

@@ -76,7 +76,12 @@ class _TrackingBody extends StatelessWidget {
         SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16),
-            child: _DeliveryCard(delivery: delivery),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.sizeOf(context).width - 32,
+              ),
+              child: _DeliveryCard(delivery: delivery),
+            ),
           ),
         ),
       ],
@@ -93,6 +98,7 @@ class _DeliveryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasDriver = delivery.driverLocation != null;
     final status = delivery.status.replaceAll('_', ' ');
+    final compact = MediaQuery.sizeOf(context).width < 480;
 
     return Material(
       elevation: 8,
@@ -104,18 +110,35 @@ class _DeliveryCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    delivery.businessName,
-                    style: Theme.of(context).textTheme.titleLarge
-                        ?.copyWith(fontWeight: FontWeight.w700),
+            compact
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        delivery.businessName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleLarge
+                            ?.copyWith(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 8),
+                      _StatusChip(label: status),
+                    ],
+                  )
+                : Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          delivery.businessName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleLarge
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      _StatusChip(label: status),
+                    ],
                   ),
-                ),
-                _StatusChip(label: status),
-              ],
-            ),
             const SizedBox(height: 8),
             Text('Order ${delivery.orderId}'),
             const SizedBox(height: 14),
@@ -127,11 +150,13 @@ class _DeliveryCard extends StatelessWidget {
                   color: Theme.of(context).colorScheme.primary,
                 ),
                 const SizedBox(width: 8),
-                Text(
-                  hasDriver
-                      ? 'Your driver is on the map'
-                      : 'Waiting for a driver to be assigned',
-                  style: const TextStyle(fontWeight: FontWeight.w600),
+                Expanded(
+                  child: Text(
+                    hasDriver
+                        ? 'Your driver is on the map'
+                        : 'Waiting for a driver to be assigned',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
                 ),
               ],
             ),
@@ -157,7 +182,7 @@ class _StatusChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Chip(
-      label: Text(label),
+      label: Text(label, maxLines: 1, overflow: TextOverflow.ellipsis),
       visualDensity: VisualDensity.compact,
       backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
       side: BorderSide.none,

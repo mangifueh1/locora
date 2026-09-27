@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:locora/features/auth/widgets/role_tab.dart';
 
@@ -127,6 +126,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final compact = MediaQuery.sizeOf(context).width < 520;
 
     return Scaffold(
       body: SafeArea(
@@ -136,14 +136,19 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.all(compact ? 16 : 24),
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: 360.w),
+                    constraints: const BoxConstraints(maxWidth: 420),
                     child: Card(
                       elevation: 1,
                       color: Colors.white,
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(32, 32, 32, 24),
+                        padding: EdgeInsets.fromLTRB(
+                          compact ? 20 : 32,
+                          compact ? 24 : 32,
+                          compact ? 20 : 32,
+                          24,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -169,10 +174,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
                             ),
-                            SizedBox(height: 16.h),
+                            SizedBox(height: 16),
                             Container(
                               color: AppColors.surfaceContainerLow,
-                              padding: .all(4.r),
+                              padding: .all(4),
                               child: Row(
                                 children: [
                                   Expanded(
@@ -267,7 +272,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             ],
                             const SizedBox(height: 18),
                             PrimaryButton(
-                              height: 44.h,
+                              height: 44,
 
                               label: _role == SignupRole.business
                                   ? 'Create Business Account ->'

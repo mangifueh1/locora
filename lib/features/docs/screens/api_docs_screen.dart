@@ -167,9 +167,12 @@ class _ApiDocsScreenState extends State<ApiDocsScreen> {
                         width: double.infinity,
                         color: Colors.white,
                         padding: const EdgeInsets.fromLTRB(15, 10, 15, 10),
-                        child: DocsCategoryRail(
-                          selected: _category,
-                          onSelected: _selectCategory,
+                        child: SizedBox(
+                          height: 40,
+                          child: DocsCategoryRail(
+                            selected: _category,
+                            onSelected: _selectCategory,
+                          ),
                         ),
                       ),
                       Expanded(

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:locora/shared/theme/app_colors.dart';
 import 'package:locora/shared/theme/app_text_sizes.dart';
@@ -48,10 +47,10 @@ class _Panel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.fromLTRB(18.w, 16.h, 18.w, 18.h),
+      padding: EdgeInsets.fromLTRB(18, 16, 18, 18),
       decoration: BoxDecoration(
         color: AppColors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(6.r),
+        borderRadius: BorderRadius.circular(6),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -59,13 +58,13 @@ class _Panel extends StatelessWidget {
           Text(
             title,
             style: TextStyle(
-              fontSize: AppTextSizes.eyebrow.sp,
+              fontSize: AppTextSizes.eyebrow,
               fontWeight: FontWeight.w600,
               color: AppColors.onSurfaceVariant,
               letterSpacing: 0.25,
             ),
           ),
-          SizedBox(height: 12.h),
+          SizedBox(height: 12),
           child,
         ],
       ),
@@ -89,25 +88,25 @@ class _ChannelTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(bottom: 10.h),
-      padding: EdgeInsets.all(12.r),
+      margin: EdgeInsets.only(bottom: 10),
+      padding: EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(4.r),
+        borderRadius: BorderRadius.circular(4),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 25.w,
-            height: 25.h,
+            width: 25,
+            height: 25,
             decoration: BoxDecoration(
               color: AppColors.primaryFixed,
-              borderRadius: BorderRadius.circular(3.r),
+              borderRadius: BorderRadius.circular(3),
             ),
-            child: Icon(icon, size: 14.sp, color: AppColors.primary),
+            child: Icon(icon, size: 14, color: AppColors.primary),
           ),
-          SizedBox(width: 10.w),
+          SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,25 +114,25 @@ class _ChannelTile extends StatelessWidget {
                 Text(
                   title,
                   style: TextStyle(
-                    fontSize: AppTextSizes.cardTitle.sp,
+                    fontSize: AppTextSizes.cardTitle,
                     fontWeight: FontWeight.w700,
                     color: AppColors.onSurface,
                   ),
                 ),
-                SizedBox(height: 2.h),
+                SizedBox(height: 2),
                 Text(
                   description,
                   style: TextStyle(
-                    fontSize: AppTextSizes.eyebrow.sp,
+                    fontSize: AppTextSizes.eyebrow,
                     height: 1.25,
                     color: AppColors.onSurfaceVariant,
                   ),
                 ),
-                SizedBox(height: 2.h),
+                SizedBox(height: 2),
                 Text(
                   '$address ›',
                   style: TextStyle(
-                    fontSize: AppTextSizes.eyebrow.sp,
+                    fontSize: AppTextSizes.eyebrow,
                     fontWeight: FontWeight.w600,
                     color: AppColors.primary,
                   ),

@@ -14,8 +14,14 @@ class ApiEndpointDetail extends StatelessWidget {
   Widget build(BuildContext context) {
     final request = endpoint.requestExample;
     final response = endpoint.responseExample;
+    final compact = MediaQuery.sizeOf(context).width < 600;
     return ListView(
-      padding: const EdgeInsets.fromLTRB(28, 25, 28, 36),
+      padding: EdgeInsets.fromLTRB(
+        compact ? 16 : 28,
+        compact ? 18 : 25,
+        compact ? 16 : 28,
+        compact ? 24 : 36,
+      ),
       children: [
         Row(
           children: [
@@ -215,34 +221,41 @@ class _ParametersTable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Table(
-      columnWidths: const {
-        0: FlexColumnWidth(1.05),
-        1: FlexColumnWidth(.75),
-        2: FlexColumnWidth(2.4),
-      },
-      children: [
-        const TableRow(
-          decoration: BoxDecoration(color: Color(0xFFF3F5F3)),
+    final compact = MediaQuery.sizeOf(context).width < 600;
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minWidth: compact ? 480 : 480),
+        child: Table(
+          columnWidths: const {
+            0: FlexColumnWidth(1.05),
+            1: FlexColumnWidth(.75),
+            2: FlexColumnWidth(2.4),
+          },
           children: [
-            _Cell('NAME', heading: true),
-            _Cell('TYPE', heading: true),
-            _Cell('DETAILS', heading: true),
+            const TableRow(
+              decoration: BoxDecoration(color: Color(0xFFF3F5F3)),
+              children: [
+                _Cell('NAME', heading: true),
+                _Cell('TYPE', heading: true),
+                _Cell('DETAILS', heading: true),
+              ],
+            ),
+            ...parameters.map(
+              (parameter) => TableRow(
+                children: [
+                  _Cell(
+                    '${parameter.name}${parameter.required ? ' *' : ''}\n${parameter.location}',
+                    mono: true,
+                  ),
+                  _Cell(parameter.type, mono: true),
+                  _Cell(parameter.description),
+                ],
+              ),
+            ),
           ],
         ),
-        ...parameters.map(
-          (parameter) => TableRow(
-            children: [
-              _Cell(
-                '${parameter.name}${parameter.required ? ' *' : ''}\n${parameter.location}',
-                mono: true,
-              ),
-              _Cell(parameter.type, mono: true),
-              _Cell(parameter.description),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

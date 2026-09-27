@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 import 'package:locora/features/auth/widgets/role_tab.dart';
 
@@ -104,6 +103,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isBusiness = _role == LoginRole.business;
+    final compact = MediaQuery.sizeOf(context).width < 520;
 
     return Scaffold(
       body: SafeArea(
@@ -113,14 +113,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             Expanded(
               child: Center(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
+                  padding: EdgeInsets.all(compact ? 16 : 24),
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(maxWidth: 360.w),
+                    constraints: const BoxConstraints(maxWidth: 420),
                     child: Card(
                       elevation: 1,
                       color: Colors.white,
                       child: Padding(
-                        padding: const EdgeInsets.fromLTRB(32, 32, 32, 24),
+                        padding: EdgeInsets.fromLTRB(
+                          compact ? 20 : 32,
+                          compact ? 24 : 32,
+                          compact ? 20 : 32,
+                          24,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
@@ -129,7 +134,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               size: 42,
                               color: theme.colorScheme.primary,
                             ),
-                            SizedBox(height: 16.h),
+                            SizedBox(height: 16),
                             Text(
                               'Locora',
                               textAlign: TextAlign.center,
@@ -146,10 +151,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
                             ),
-                            SizedBox(height: 16.h),
+                            SizedBox(height: 16),
                             Container(
                               color: AppColors.surfaceContainerLow,
-                              padding: .all(4.r),
+                              padding: .all(4),
                               child: Row(
                                 children: [
                                   Expanded(
@@ -173,7 +178,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 ],
                               ),
                             ),
-                            SizedBox(height: 28.h),
+                            SizedBox(height: 28),
                             Text(
                               'Welcome back.',
                               style: theme.textTheme.headlineSmall?.copyWith(
@@ -186,7 +191,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   ? 'Log in to manage your Locora business account.'
                                   : 'Log in to view and manage your deliveries.',
                             ),
-                            SizedBox(height: 24.h),
+                            SizedBox(height: 24),
                             LocoraTextField(
                               label: isBusiness
                                   ? 'Business Name'
@@ -243,7 +248,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             PrimaryButton(
                               label: 'Log In ->',
                               onPressed: _loading ? null : _login,
-                              height: 44.h,
+                              height: 44,
                             ),
                             // FilledButton(
                             //   onPressed: _loading ? null : _login,

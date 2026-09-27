@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:locora/shared/theme/app_colors.dart';
 import 'package:locora/shared/theme/app_text_sizes.dart';
 
@@ -34,12 +33,12 @@ class LocoraTextField extends StatelessWidget {
       child: Column(
         mainAxisSize: .min,
         crossAxisAlignment: .start,
-        spacing: 6.h,
+        spacing: 6,
         children: [
           Text(
             label,
             style: TextStyle(
-              fontSize: AppTextSizes.label.sp,
+              fontSize: AppTextSizes.label,
               fontWeight: FontWeight.w600,
               color: AppColors.tertiary,
             ),
@@ -51,17 +50,17 @@ class LocoraTextField extends StatelessWidget {
             textInputAction: textInputAction,
 
             decoration: InputDecoration(
-              contentPadding: .all(14.r),
+              contentPadding: .all(14),
               hintText: hint,
               hintStyle: TextStyle(color: AppColors.outlineVariant),
               focusedBorder: OutlineInputBorder(
-                borderRadius: .circular(4.r),
+                borderRadius: .circular(4),
                 borderSide: BorderSide(color: AppColors.outlineVariant),
               ),
               prefixIcon: icon == null ? null : Icon(icon),
               suffixIcon: suffix,
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(4.r),
+                borderRadius: BorderRadius.circular(4),
                 borderSide: BorderSide(color: AppColors.outlineVariant),
               ),
             ),

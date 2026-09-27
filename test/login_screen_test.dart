@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:locora/features/auth/screens/login_screen.dart';
 
 void main() {
   testWidgets('switches between business and driver login fields', (
     tester,
   ) async {
+    final router = GoRouter(
+      routes: [
+        GoRoute(path: '/', builder: (_, __) => const LoginScreen()),
+        GoRoute(path: '/signup', builder: (_, __) => const LoginScreen()),
+      ],
+    );
+    addTearDown(router.dispose);
     await tester.pumpWidget(
-      const ProviderScope(child: MaterialApp(home: LoginScreen())),
+      ProviderScope(child: MaterialApp.router(routerConfig: router)),
     );
 
     expect(find.text('Business Name'), findsOneWidget);

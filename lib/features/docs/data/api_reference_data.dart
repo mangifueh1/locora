@@ -20,8 +20,8 @@ class ApiReferenceData {
         ApiParameter(
           name: 'name',
           type: 'string',
-          description: 'Unique business name.',
-          required: true,
+            description: 'Unique business name.', 
+            required: true,
         ),
         ApiParameter(
           name: 'password',

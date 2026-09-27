@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:locora/shared/theme/app_colors.dart';
 import 'package:locora/shared/theme/app_text_sizes.dart';
@@ -38,11 +37,14 @@ class _ContactFormState extends State<ContactForm> {
 
   @override
   Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 900;
     return Container(
-      padding: EdgeInsets.fromLTRB(25.w, 20.h, 25.w, 18.h),
+      padding: compact
+          ? const EdgeInsets.fromLTRB(16, 16, 16, 14)
+          : EdgeInsets.fromLTRB(25, 20, 25, 18),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(6.r),
+        borderRadius: BorderRadius.circular(6),
         boxShadow: const [
           BoxShadow(
             color: Color(0x18000000),
@@ -57,7 +59,7 @@ class _ContactFormState extends State<ContactForm> {
           children: [
             LayoutBuilder(
               builder: (context, constraints) {
-                final isCompact = constraints.maxWidth < 420.w;
+                final isCompact = constraints.maxWidth < 420;
                 final fields = [
                   _ContactField(
                     label: 'Full Name',
@@ -91,7 +93,7 @@ class _ContactFormState extends State<ContactForm> {
                     children: fields
                         .map(
                           (field) => Padding(
-                            padding: EdgeInsets.only(bottom: 14.h),
+                            padding: EdgeInsets.only(bottom: 14),
                             child: field,
                           ),
                         )
@@ -103,14 +105,14 @@ class _ContactFormState extends State<ContactForm> {
                   crossAxisCount: 2,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  crossAxisSpacing: 16.w,
-                  mainAxisSpacing: 12.h,
-                  childAspectRatio: 3.7,
+                  crossAxisSpacing: 16,
+                  // mainAxisSpacing: 10,
+                  childAspectRatio: 4.7,
                   children: fields,
                 );
               },
             ),
-            SizedBox(height: 6.h),
+            SizedBox(height: 6),
             _ContactField(
               label: 'Message',
               hint: 'Tell us about your delivery workflow and what you need...',
@@ -118,40 +120,77 @@ class _ContactFormState extends State<ContactForm> {
               validator: _requiredValidator,
               maxLines: 5,
             ),
-            SizedBox(height: 17.h),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.schedule_outlined,
-                  size: 14.sp,
-                  color: AppColors.primary,
-                ),
-                SizedBox(width: 4.w),
-                Expanded(
-                  child: Text(
-                    'We typically respond within 2–4 business hours.',
-                    style: TextStyle(
-                      fontSize: AppTextSizes.small.sp,
-                      height: 1.2,
-                      color: AppColors.onSurfaceVariant,
-                    ),
+            SizedBox(height: 17),
+            compact
+                ? Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.schedule_outlined,
+                            size: 16,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              'We typically respond within 2–4 business hours.',
+                              style: TextStyle(
+                                fontSize: AppTextSizes.small,
+                                height: 1.3,
+                                color: AppColors.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+                      PrimaryButton(
+                        height: 44,
+                        label: 'Send Message',
+                        onPressed: _submit,
+                        suffixIcon: const Icon(
+                          Icons.arrow_forward,
+                          size: 16,
+                          color: AppColors.onPrimary,
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.schedule_outlined,
+                        size: 14,
+                        color: AppColors.primary,
+                      ),
+                      SizedBox(width: 4),
+                      Expanded(
+                        child: Text(
+                          'We typically respond within 2–4 business hours.',
+                          style: TextStyle(
+                            fontSize: AppTextSizes.small,
+                            height: 1.2,
+                            color: AppColors.onSurfaceVariant,
+                          ),
+                        ),
+                      ),
+                      PrimaryButton(
+                        width: 104,
+                        height: 32,
+                        label: 'Send Message',
+                        labelSize: 8,
+                        onPressed: _submit,
+                        suffixIcon: Icon(
+                          Icons.arrow_forward,
+                          size: 12,
+                          color: AppColors.onPrimary,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-                PrimaryButton(
-                  width: 104.w,
-                  height: 32.h,
-                  label: 'Send Message',
-                  labelSize: 8.sp,
-                  onPressed: _submit,
-                  suffixIcon: Icon(
-                    Icons.arrow_forward,
-                    size: 12.sp,
-                    color: AppColors.onPrimary,
-                  ),
-                ),
-              ],
-            ),
           ],
         ),
       ),
@@ -190,16 +229,16 @@ class _ContactField extends StatelessWidget {
             Text(
               label,
               style: TextStyle(
-                fontSize: 8.sp,
+                fontSize: AppTextSizes.small,
                 fontWeight: FontWeight.w600,
                 color: AppColors.onSurface,
               ),
             ),
-            SizedBox(width: 3.w),
+            SizedBox(width: 3),
             Text(
               optional ? 'Optional' : '*',
               style: TextStyle(
-                fontSize: 8.sp,
+                fontSize: 8,
                 color: optional
                     ? AppColors.onSurfaceVariant
                     : AppColors.primary,
@@ -207,19 +246,25 @@ class _ContactField extends StatelessWidget {
             ),
           ],
         ),
-        SizedBox(height: 5.h),
+        SizedBox(height: 5),
         TextFormField(
           controller: controller,
           validator: validator,
           maxLines: maxLines,
-          style: TextStyle(fontSize: 9.sp, color: AppColors.onSurface),
+          style: TextStyle(
+            fontSize: AppTextSizes.body,
+            color: AppColors.onSurface,
+          ),
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(fontSize: 9.sp, color: AppColors.outline),
+            hintStyle: TextStyle(
+              fontSize: AppTextSizes.body,
+              color: AppColors.outline,
+            ),
             isDense: true,
             contentPadding: EdgeInsets.symmetric(
-              horizontal: 10.w,
-              vertical: maxLines > 1 ? 11.h : 8.h,
+              horizontal: 10,
+              vertical: maxLines > 1 ? 11 : 12,
             ),
             border: _fieldBorder,
             enabledBorder: _fieldBorder,
@@ -236,7 +281,7 @@ class _ContactField extends StatelessWidget {
   }
 
   OutlineInputBorder get _fieldBorder => OutlineInputBorder(
-    borderRadius: BorderRadius.circular(2.r),
+    borderRadius: BorderRadius.circular(2),
     borderSide: BorderSide(
       color: AppColors.outlineVariant.withValues(alpha: 0.38),
     ),
@@ -256,20 +301,18 @@ class _InquiryTypeField extends StatelessWidget {
             Text(
               'Subject',
               style: TextStyle(
-                fontSize: 8.sp,
+                fontSize: 8,
                 fontWeight: FontWeight.w600,
                 color: AppColors.onSurface,
               ),
             ),
-            SizedBox(width: 3.w),
-            Text(
-              '*',
-              style: TextStyle(fontSize: 8.sp, color: AppColors.primary),
-            ),
+            SizedBox(width: 3),
+            Text('*', style: TextStyle(fontSize: 8, color: AppColors.primary)),
           ],
         ),
-        SizedBox(height: 5.h),
+        SizedBox(height: 5),
         DropdownButtonFormField<String>(
+          isExpanded: true,
           initialValue: null,
           validator: (value) => value == null ? 'Required' : null,
           items: const [
@@ -284,20 +327,17 @@ class _InquiryTypeField extends StatelessWidget {
             DropdownMenuItem(value: 'support', child: Text('Support')),
           ],
           onChanged: (_) {},
-          style: TextStyle(fontSize: 9.sp, color: AppColors.onSurface),
+          style: TextStyle(fontSize: 9, color: AppColors.onSurface),
           decoration: InputDecoration(
             hintText: 'Select an inquiry type',
             hintStyle: TextStyle(
-              fontSize: 9.sp,
+              fontSize: 9,
               color: AppColors.onSurfaceVariant,
             ),
             isDense: true,
-            contentPadding: EdgeInsets.symmetric(
-              horizontal: 10.w,
-              vertical: 8.h,
-            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 10, vertical: 8),
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(2.r),
+              borderRadius: BorderRadius.circular(2),
               borderSide: BorderSide(
                 color: AppColors.outlineVariant.withValues(alpha: 0.38),
               ),

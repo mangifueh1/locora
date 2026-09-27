@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:locora/shared/theme/app_colors.dart';
 import 'package:locora/shared/theme/app_text_sizes.dart';
@@ -19,10 +18,10 @@ class _ApiStatusCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 13.h),
+      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 13),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(5.r),
+        borderRadius: BorderRadius.circular(5),
         border: Border.all(
           color: AppColors.outlineVariant.withValues(alpha: 0.28),
         ),
@@ -30,19 +29,19 @@ class _ApiStatusCard extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            width: 7.r,
-            height: 7.r,
+            width: 7,
+            height: 7,
             decoration: const BoxDecoration(
               color: AppColors.secondary,
               shape: BoxShape.circle,
             ),
           ),
-          SizedBox(width: 10.w),
+          SizedBox(width: 10),
           Expanded(
             child: RichText(
               text: TextSpan(
                 style: TextStyle(
-                  fontSize: AppTextSizes.eyebrow.sp,
+                  fontSize: AppTextSizes.eyebrow,
                   color: AppColors.onSurfaceVariant,
                 ),
 
@@ -59,7 +58,7 @@ class _ApiStatusCard extends StatelessWidget {
           ),
           Icon(
             Icons.verified_outlined,
-            size: 13.sp,
+            size: 13,
             color: AppColors.secondary,
           ),
         ],

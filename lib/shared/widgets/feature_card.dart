@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:locora/shared/theme/app_colors.dart';
@@ -27,39 +26,39 @@ class FeatureCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return InkWell(
       onTap: onLinkPressed,
-      borderRadius: BorderRadius.circular(8.r),
+      borderRadius: BorderRadius.circular(8),
       child: Container(
-        padding: EdgeInsets.all(32.r),
+        padding: EdgeInsets.all(32),
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
             BoxShadow(
               color: Colors.black12,
-              blurRadius: 2.r,
+              blurRadius: 2,
               spreadRadius: 0,
               offset: Offset(0, 1),
             ),
           ],
-          borderRadius: BorderRadius.circular(8.r),
+          borderRadius: BorderRadius.circular(8),
         ),
         child: Column(
           mainAxisSize: .min,
           crossAxisAlignment: CrossAxisAlignment.start,
-          spacing: 20.h,
+          spacing: 20,
           children: [
             Container(
-              width: 40.w,
-              height: 40.h,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
                 color: AppColors.surfaceContainerLow,
-                borderRadius: BorderRadius.circular(6.r),
+                borderRadius: BorderRadius.circular(6),
               ),
-              child: Icon(icon, color: AppColors.primary, size: 16.sp),
+              child: Icon(icon, color: AppColors.primary, size: 16),
             ),
             Text(
               title,
               style: TextStyle(
-                fontSize: AppTextSizes.cardTitle.sp,
+                fontSize: AppTextSizes.cardTitle,
                 fontWeight: FontWeight.w700,
                 color: AppColors.onSurface,
               ),
@@ -67,7 +66,7 @@ class FeatureCard extends StatelessWidget {
             Text(
               description,
               style: TextStyle(
-                fontSize: AppTextSizes.cardBody.sp,
+                fontSize: AppTextSizes.cardBody,
                 height: 1.55,
                 color: AppColors.onSurfaceVariant,
               ),
@@ -79,19 +78,15 @@ class FeatureCard extends StatelessWidget {
                   child: Text(
                     linkLabel,
                     style: TextStyle(
-                      fontSize: AppTextSizes.link.sp,
+                      fontSize: AppTextSizes.link,
                       fontWeight: FontWeight.w600,
                       color: AppColors.primary,
                     ),
                   ),
                 ),
-                SizedBox(width: 6.w),
+                SizedBox(width: 6),
                 if (showArrow)
-                  Icon(
-                    Icons.arrow_forward,
-                    size: 17.sp,
-                    color: AppColors.primary,
-                  ),
+                  Icon(Icons.arrow_forward, size: 17, color: AppColors.primary),
               ],
             ),
           ],
@@ -106,37 +101,47 @@ class FeatureCardsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cards = [
+      FeatureCard(
+        icon: Icons.explore_outlined,
+        title: 'Precise Locations',
+        description: 'Customers can select exactly where they want their delivery on an intuitive map picker.',
+        linkLabel: 'Coordinate-level resolution',
+      ),
+      FeatureCard(
+        icon: Icons.integration_instructions_outlined,
+        title: 'Simple Integration',
+        description: 'Connect Locora to the websites and apps your business already uses with our modern REST and webhook APIs.',
+        linkLabel: 'See API Docs',
+        showArrow: true,
+        onLinkPressed: () => context.go('/api-docs'),
+      ),
+      FeatureCard(
+        icon: Icons.visibility_outlined,
+        title: 'Delivery Visibility',
+        description: "Businesses and drivers can see where deliveries are and where they're going in real time.",
+        linkLabel: 'Real-time order tracking.',
+      ),
+    ];
+    if (MediaQuery.sizeOf(context).width < 900) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (var index = 0; index < cards.length; index++) ...[
+            if (index > 0) const SizedBox(height: 14),
+            cards[index],
+          ],
+        ],
+      );
+    }
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: FeatureCard(
-            icon: Icons.explore_outlined,
-            title: 'Precise Locations',
-            description: 'Customers can select exactly where they want their delivery on an intuitive map picker.',
-            linkLabel: 'Coordinate-level resolution',
-          ),
-        ),
-        SizedBox(width: 24.w),
-        Expanded(
-          child: FeatureCard(
-            icon: Icons.integration_instructions_outlined,
-            title: 'Simple Integration',
-            description: 'Connect Locora to the websites and apps your business already uses with our modern REST and webhook APIs.',
-            linkLabel: 'See API Docs',
-            showArrow: true,
-            onLinkPressed: () => context.go('/api-docs'),
-          ),
-        ),
-        SizedBox(width: 24.w),
-        Expanded(
-          child: FeatureCard(
-            icon: Icons.visibility_outlined,
-            title: 'Delivery Visibility',
-            description: "Businesses and drivers can see where deliveries are and where they're going in real time.",
-            linkLabel: 'Real-time order tracking.',
-          ),
-        ),
+        Expanded(child: cards[0]),
+        SizedBox(width: 24),
+        Expanded(child: cards[1]),
+        SizedBox(width: 24),
+        Expanded(child: cards[2]),
       ],
     );
   }

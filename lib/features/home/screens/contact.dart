@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 import 'package:locora/features/home/widgets/contact_cta.dart';
 import 'package:locora/features/home/widgets/contact_form.dart';
@@ -14,6 +13,7 @@ class ContactScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 760;
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -22,20 +22,25 @@ class ContactScreen extends StatelessWidget {
             children: [
               const Navbar(),
               Padding(
-                padding: EdgeInsets.fromLTRB(78.w, 44.h, 78.w, 46.h),
+                padding: EdgeInsets.fromLTRB(
+                  compact ? 20 : 78,
+                  compact ? 28 : 44,
+                  compact ? 20 : 78,
+                  compact ? 30 : 46,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const ContactIntro(),
-                    SizedBox(height: 28.h),
+                    SizedBox(height: 28),
                     LayoutBuilder(
                       builder: (context, constraints) {
-                        final isCompact = constraints.maxWidth < 760.w;
+                        final isCompact = constraints.maxWidth < 760;
                         final form = const ContactForm();
                         final sidebar = Column(
                           children: [
                             const DirectChannels(),
-                            SizedBox(height: 12.h),
+                            SizedBox(height: 12),
                             const ContactStatus(),
                           ],
                         );
@@ -44,7 +49,7 @@ class ContactScreen extends StatelessWidget {
                           return Column(
                             children: [
                               form,
-                              SizedBox(height: 18.h),
+                              SizedBox(height: 18),
                               sidebar,
                             ],
                           );
@@ -54,13 +59,13 @@ class ContactScreen extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(flex: 3, child: form),
-                            SizedBox(width: 28.w),
+                            SizedBox(width: 28),
                             Expanded(flex: 2, child: sidebar),
                           ],
                         );
                       },
                     ),
-                    SizedBox(height: 36.h),
+                    SizedBox(height: 36),
                     const ContactCta(),
                   ],
                 ),
