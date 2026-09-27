@@ -12,6 +12,7 @@
 .swiftpm/
 migrate_working_dir/
 02-frontend-realtime-deployment-clean-architecture.md
+NETLIFY_DEPLOYMENT.md
 
 # IntelliJ related
 *.iml

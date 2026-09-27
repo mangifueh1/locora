@@ -9,7 +9,7 @@ import 'package:locora/features/driver/screens/driver_dashboard_screen.dart';
 import 'package:locora/features/driver/screens/delivery_detail_screen.dart';
 import 'package:locora/features/home/screens/homepage.dart';
 import 'package:locora/features/home/screens/contact.dart';
-import 'package:locora/features/home/screens/api_docs_screen.dart';
+import 'package:locora/features/docs/screens/api_docs_screen.dart';
 import 'package:locora/features/picker/screens/location_picker_screen.dart';
 import 'package:locora/features/track/screens/tracker_screen.dart';
 
