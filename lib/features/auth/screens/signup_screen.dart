@@ -28,6 +28,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _businessName = TextEditingController();
   final _driverName = TextEditingController();
   final _phone = TextEditingController();
+  final _businessIdControllers = [TextEditingController()];
   final _businessPassword = TextEditingController();
   final _driverPassword = TextEditingController();
   final _businessConfirmPassword = TextEditingController();
@@ -36,6 +37,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
 
   bool _loading = false;
   String? _error;
+  String? _businessIdsError;
 
   TextEditingController get _password =>
       _role == SignupRole.business ? _businessPassword : _driverPassword;
@@ -55,6 +57,9 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     _businessName.dispose();
     _driverName.dispose();
     _phone.dispose();
+    for (final controller in _businessIdControllers) {
+      controller.dispose();
+    }
     _businessPassword.dispose();
     _driverPassword.dispose();
     _businessConfirmPassword.dispose();
@@ -68,10 +73,43 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     setState(() {
       _role = role;
       _error = null;
+      _businessIdsError = null;
     });
   }
 
+  void _addBusinessIdField() {
+    if (_loading || _businessIdControllers.last.text.trim().isEmpty) return;
+    setState(() {
+      _businessIdControllers.add(TextEditingController());
+      _businessIdsError = null;
+    });
+  }
+
+  void _removeBusinessIdField(int index) {
+    if (_loading || index == 0) return;
+    setState(() {
+      _businessIdControllers.removeAt(index).dispose();
+      _businessIdsError = null;
+    });
+  }
+
+  List<String> get _businessIds => _businessIdControllers
+      .map((controller) => controller.text.trim())
+      .where((businessId) => businessId.isNotEmpty)
+      .toSet()
+      .toList();
+
   Future<void> _signup() async {
+    if (_role == SignupRole.driver &&
+        _businessIdControllers.any(
+          (controller) => controller.text.trim().isEmpty,
+        )) {
+      setState(() {
+        _businessIdsError = 'Enter a business ID in each field.';
+      });
+      return;
+    }
+
     final password = _password.text;
     if (password.isEmpty || _confirmPassword.text.isEmpty) {
       setState(() => _error = 'Please enter and confirm your password.');
@@ -85,6 +123,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     setState(() {
       _loading = true;
       _error = null;
+      _businessIdsError = null;
     });
 
     try {
@@ -107,7 +146,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
               name: _driverName.text.trim(),
               phone: _phone.text.trim(),
               password: password,
-              businessIds: const [],
+              businessIds: _businessIds,
             );
         if (result.token != null) {
           await ref.read(driverSessionProvider).saveToken(result.token!);
@@ -238,6 +277,68 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                 keyboardType: TextInputType.phone,
                                 textInputAction: TextInputAction.next,
                               ),
+                              for (
+                                var index = 0;
+                                index < _businessIdControllers.length;
+                                index++
+                              )
+                                LocoraTextField(
+                                  label: index == 0
+                                      ? 'Business ID'
+                                      : 'Business ID ${index + 1}',
+                                  controller: _businessIdControllers[index],
+                                  hint: 'Enter a business ID',
+                                  icon: Icons.business_outlined,
+                                  textInputAction: TextInputAction.next,
+                                  onChanged: (_) => setState(() {
+                                    _businessIdsError = null;
+                                  }),
+                                  suffix: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      if (index > 0)
+                                        IconButton(
+                                          tooltip:
+                                              'Remove business ID ${index + 1}',
+                                          visualDensity: VisualDensity.compact,
+                                          onPressed: _loading
+                                              ? null
+                                              : () => _removeBusinessIdField(
+                                                  index,
+                                                ),
+                                          icon: const Icon(
+                                            Icons.remove_circle_outline,
+                                          ),
+                                        ),
+                                      if (index ==
+                                              _businessIdControllers.length -
+                                                  1 &&
+                                          _businessIdControllers[index].text
+                                              .trim()
+                                              .isNotEmpty)
+                                        IconButton(
+                                          tooltip: 'Add business ID',
+                                          visualDensity: VisualDensity.compact,
+                                          onPressed: _loading
+                                              ? null
+                                              : _addBusinessIdField,
+                                          icon: const Icon(
+                                            Icons.add_circle_outline,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              if (_businessIdsError != null)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: Text(
+                                    _businessIdsError!,
+                                    style: TextStyle(
+                                      color: theme.colorScheme.error,
+                                    ),
+                                  ),
+                                ),
                             ],
                             LocoraTextField(
                               label: 'Password',

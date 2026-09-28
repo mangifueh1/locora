@@ -11,6 +11,7 @@ class LocoraTextField extends StatelessWidget {
     this.icon,
     this.keyboardType,
     this.textInputAction,
+    this.onChanged,
     this.obscureText = false,
     this.suffix,
     this.bottomPadding = 14,
@@ -22,6 +23,7 @@ class LocoraTextField extends StatelessWidget {
   final IconData? icon;
   final TextInputType? keyboardType;
   final TextInputAction? textInputAction;
+  final ValueChanged<String>? onChanged;
   final bool obscureText;
   final Widget? suffix;
   final double bottomPadding;
@@ -48,6 +50,7 @@ class LocoraTextField extends StatelessWidget {
             obscureText: obscureText,
             keyboardType: keyboardType,
             textInputAction: textInputAction,
+            onChanged: onChanged,
 
             decoration: InputDecoration(
               contentPadding: .all(14),
