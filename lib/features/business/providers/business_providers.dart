@@ -17,6 +17,15 @@ final businessApiKeyProvider = FutureProvider<String?>((ref) {
   return ref.read(businessSessionProvider).readApiKey();
 });
 
+String? businessIdFromApiKey(String? apiKey) {
+  if (apiKey == null) return null;
+
+  final separatorIndex = apiKey.indexOf('.');
+  if (separatorIndex <= 0) return null;
+
+  return apiKey.substring(0, separatorIndex);
+}
+
 final businessDashboardProvider =
     AsyncNotifierProvider<BusinessDashboardNotifier, BusinessDashboardData>(
       BusinessDashboardNotifier.new,

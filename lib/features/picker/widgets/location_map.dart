@@ -6,10 +6,12 @@ class LocationMap extends StatelessWidget {
   const LocationMap({
     super.key,
     required this.center,
+    required this.zoom,
     required this.onCenterChanged,
   });
 
   final LatLng center;
+  final double zoom;
   final ValueChanged<LatLng> onCenterChanged;
 
   @override
@@ -18,11 +20,12 @@ class LocationMap extends StatelessWidget {
       alignment: Alignment.center,
       children: [
         MapWidget(
+          styleUri: MapboxStyles.STANDARD_SATELLITE,
           viewport: CameraViewportState(
             center: Point(
               coordinates: Position(center.longitude, center.latitude),
             ),
-            zoom: 15,
+            zoom: zoom,
             bearing: 0,
             pitch: 0,
           ),

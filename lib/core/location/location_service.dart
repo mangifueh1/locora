@@ -22,6 +22,22 @@ class LocationService {
     return true;
   }
 
+  Future<Position?> getCurrentPosition() async {
+    if (!await ensurePermission()) {
+      return null;
+    }
+
+    try {
+      return await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
   Stream<Position> positionStream() {
     return Geolocator.getPositionStream(
       locationSettings: const LocationSettings(
@@ -31,5 +47,3 @@ class LocationService {
     );
   }
 }
-
-

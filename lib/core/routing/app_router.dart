@@ -1,6 +1,7 @@
 // ignore_for_file: unnecessary_underscores
 
 import 'package:go_router/go_router.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:locora/features/auth/screens/login_screen.dart';
 import 'package:locora/features/auth/screens/signup_screen.dart';
@@ -27,6 +28,12 @@ final appRouter = GoRouter(
         return LocationPickerScreen(token: state.pathParameters['token']!);
       },
     ),
+    if (kDebugMode)
+      GoRoute(
+        path: '/pick-preview',
+        builder: (_, __) =>
+            const LocationPickerScreen(token: 'preview', isPreview: true),
+      ),
     GoRoute(
       path: '/track/:token',
       builder: (context, state) {

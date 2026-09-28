@@ -1,8 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:locora/core/providers.dart';
+import 'package:locora/core/location/location_service.dart';
 import 'package:locora/core/storage/token_storage.dart';
 import 'package:locora/features/driver/data/driver_api.dart';
+import 'package:locora/features/driver/models/available_deliveries.dart';
+import 'package:locora/features/driver/models/driver_business.dart';
 import 'package:locora/features/driver/models/delivery.dart';
 
 final driverApiProvider = Provider<DriverApi>((ref) {
@@ -11,6 +14,10 @@ final driverApiProvider = Provider<DriverApi>((ref) {
 
 final driverSessionProvider = Provider<DriverSession>((ref) {
   return DriverSession(ref.watch(tokenStorageProvider));
+});
+
+final driverLocationServiceProvider = Provider<LocationService>((ref) {
+  return LocationService();
 });
 
 class DriverSession {
@@ -27,9 +34,23 @@ class DriverSession {
   }
 }
 
-final driverDeliveriesProvider =
-    FutureProvider.autoDispose<List<Delivery>>((ref) {
+final driverDeliveriesProvider = FutureProvider.autoDispose<List<Delivery>>((
+  ref,
+) {
   return ref.watch(driverApiProvider).myDeliveries();
 });
 
+final driverDeliveryDetailProvider = FutureProvider.autoDispose
+    .family<Delivery, String>((ref, deliveryId) {
+      return ref.watch(driverApiProvider).deliveryDetail(deliveryId);
+    });
 
+final driverAvailableDeliveriesProvider =
+    FutureProvider.autoDispose<AvailableDeliveries>((ref) {
+      return ref.watch(driverApiProvider).availableDeliveries();
+    });
+
+final driverBusinessesProvider =
+    FutureProvider.autoDispose<List<DriverBusiness>>((ref) {
+      return ref.watch(driverApiProvider).businesses();
+    });

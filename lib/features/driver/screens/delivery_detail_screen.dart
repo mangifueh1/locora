@@ -13,11 +13,7 @@ class DeliveryDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final delivery = ref.watch(
-      FutureProvider.autoDispose(
-        (ref) => ref.watch(driverApiProvider).deliveryDetail(deliveryId),
-      ),
-    );
+    final delivery = ref.watch(driverDeliveryDetailProvider(deliveryId));
 
     final tracking = ref.watch(liveDeliveryControllerProvider(deliveryId));
 
@@ -46,6 +42,7 @@ class DeliveryDetailScreen extends ConsumerWidget {
             children: [
               Expanded(
                 child: MapWidget(
+                  styleUri: MapboxStyles.DARK,
                   viewport: CameraViewportState(
                     center: Point(
                       coordinates: Position(

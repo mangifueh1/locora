@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:locora/features/business/providers/business_providers.dart';
+import 'package:locora/features/business/widgets/business_dashboard_content.dart';
 
 class BusinessDashboardScreen extends ConsumerWidget {
   const BusinessDashboardScreen({super.key});
@@ -16,33 +17,26 @@ class BusinessDashboardScreen extends ConsumerWidget {
           loading: () => null,
           error: (error, stackTrace) => null,
         );
+    final businessId = businessIdFromApiKey(apiKey);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Business dashboard')),
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: dashboard.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) =>
-            Center(child: Text('Could not load dashboard: $error')),
-        data: (data) => RefreshIndicator(
+        error: (error, _) => Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Text('Could not load dashboard: $error'),
+          ),
+        ),
+        data: (data) => BusinessDashboardContent(
+          data: data,
+          businessId: businessId,
+          apiKey: apiKey,
           onRefresh: () async {
             ref.invalidate(businessDashboardProvider);
             await ref.read(businessDashboardProvider.future);
           },
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              if (apiKey != null) ...[
-                const Text(
-                  'Your API key',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                SelectableText(apiKey),
-                const SizedBox(height: 16),
-              ],
-              Text('Drivers: ${data.drivers.length}'),
-              Text('Pending deliveries: ${data.pendingDeliveries.length}'),
-            ],
-          ),
         ),
       ),
     );

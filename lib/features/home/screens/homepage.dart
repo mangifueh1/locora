@@ -402,12 +402,13 @@ class _HeroSection extends StatelessWidget {
               spacing: 70,
               children: [
                 ConstrainedBox(
-                  constraints: BoxConstraints(maxWidth: 800),
+                  constraints: BoxConstraints(maxWidth: 700),
                   child: copy,
                 ),
                 Expanded(
                   child: ConstrainedBox(
-                    constraints: BoxConstraints(maxHeight: 700),
+                    constraints: BoxConstraints(maxHeight: 700, minWidth: 300),
+                  
                     child: Container(
                       alignment: Alignment.centerRight,
                       child: image,
