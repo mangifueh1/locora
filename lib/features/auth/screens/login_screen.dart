@@ -249,19 +249,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               label: 'Log In ->',
                               onPressed: _loading ? null : _login,
                               height: 44,
+                              isLoading: _loading,
                             ),
-                            // FilledButton(
-                            //   onPressed: _loading ? null : _login,
-                            //   child: _loading
-                            //       ? const SizedBox(
-                            //           width: 20,
-                            //           height: 20,
-                            //           child: CircularProgressIndicator(
-                            //             strokeWidth: 2,
-                            //           ),
-                            //         )
-                            //       : const Text('Log in  ->'),
-                            // ),
                             const SizedBox(height: 12),
                             TextButton(
                               style: ButtonStyle(

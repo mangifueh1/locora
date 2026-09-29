@@ -374,28 +374,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             const SizedBox(height: 18),
                             PrimaryButton(
                               height: 44,
-
                               label: _role == SignupRole.business
                                   ? 'Create Business Account ->'
                                   : 'Create Driver Account ->',
                               onPressed: _loading ? null : _signup,
+                              isLoading: _loading,
                             ),
-                            // FilledButton(
-                            //   onPressed: _loading ? null : _signup,
-                            //   child: _loading
-                            //       ? const SizedBox(
-                            //           width: 20,
-                            //           height: 20,
-                            //           child: CircularProgressIndicator(
-                            //             strokeWidth: 2,
-                            //           ),
-                            //         )
-                            //       : Text(
-                            //           _role == SignupRole.business
-                            //               ? 'Create Business Account ->'
-                            //               : 'Create Driver Account ->',
-                            //         ),
-                            // ),
                             const SizedBox(height: 12),
                             TextButton(
                               style: ButtonStyle(

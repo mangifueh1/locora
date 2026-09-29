@@ -13,6 +13,7 @@ class PrimaryButton extends StatelessWidget {
     this.color,
     this.labelColor,
     this.suffixIcon,
+    this.isLoading = false,
   });
 
   final String label;
@@ -23,6 +24,7 @@ class PrimaryButton extends StatelessWidget {
   final Color? color;
   final Color? labelColor;
   final Icon? suffixIcon;
+  final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +32,7 @@ class PrimaryButton extends StatelessWidget {
       color: color ?? AppColors.primary,
       borderRadius: BorderRadius.circular(4),
       child: InkWell(
-        onTap: onPressed,
+        onTap: isLoading ? null : onPressed,
         borderRadius: BorderRadius.circular(4),
         child: Container(
           padding: (height != null || width != null)
@@ -56,6 +58,17 @@ class PrimaryButton extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
+                    if (isLoading) ...[
+                      SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: labelColor ?? AppColors.onPrimary,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                    ],
                     if (constraints.maxWidth.isFinite)
                       Flexible(child: labelText)
                     else
