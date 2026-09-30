@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:locora/core/network/api_client.dart';
 import 'package:locora/features/driver/models/available_deliveries.dart';
 import 'package:locora/features/driver/models/driver_business.dart';
@@ -61,6 +62,7 @@ class DriverApi {
       '/api/v1/deliveries/$id',
       auth: RequestAuth.driver,
     );
+    debugPrint('Delivery detail backend response: $result');
 
     return Delivery.fromJson(result['delivery'] as Map<String, dynamic>);
   }
