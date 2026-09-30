@@ -21,29 +21,21 @@ class LiveDeliveryState {
     this.isSharing = false,
     this.isLoading = false,
     this.error,
-    this.driverLatitude,
-    this.driverLongitude,
   });
 
   final bool isSharing;
   final bool isLoading;
   final String? error;
-  final double? driverLatitude;
-  final double? driverLongitude;
 
   LiveDeliveryState copyWith({
     bool? isSharing,
     bool? isLoading,
     String? error,
-    double? driverLatitude,
-    double? driverLongitude,
   }) {
     return LiveDeliveryState(
       isSharing: isSharing ?? this.isSharing,
       isLoading: isLoading ?? this.isLoading,
       error: error,
-      driverLatitude: driverLatitude ?? this.driverLatitude,
-      driverLongitude: driverLongitude ?? this.driverLongitude,
     );
   }
 }
@@ -110,10 +102,6 @@ class LiveDeliveryController extends Notifier<LiveDeliveryState> {
       _positionSubscription = _locationService.positionStream().listen((
         position,
       ) {
-        state = state.copyWith(
-          driverLatitude: position.latitude,
-          driverLongitude: position.longitude,
-        );
         _socketService.sendDriverLocation(
           _socket!,
           deliveryId: deliveryId,

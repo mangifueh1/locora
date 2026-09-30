@@ -6,30 +6,9 @@ import 'package:locora/features/driver/models/delivery.dart';
 import 'package:locora/features/driver/models/driver_business.dart';
 import 'package:locora/features/driver/providers/driver_providers.dart';
 import 'package:locora/features/driver/screens/driver_dashboard_screen.dart';
-import 'package:locora/features/driver/screens/delivery_detail_screen.dart';
+import 'package:locora/features/track/screens/tracker_screen.dart';
 
 void main() {
-  test('delivery model reads flat and nested driver coordinates', () {
-    final flat = Delivery.fromJson({
-      'id': 'flat',
-      'order_id': 'ORD-FLAT',
-      'status': 'assigned',
-      'driver_lat': 4.2,
-      'driver_lng': 9.3,
-    });
-    final nested = Delivery.fromJson({
-      'id': 'nested',
-      'order_id': 'ORD-NESTED',
-      'status': 'assigned',
-      'driver': {'lat': 4.4, 'lng': 9.5},
-    });
-
-    expect(flat.driverLat, 4.2);
-    expect(flat.driverLng, 9.3);
-    expect(nested.driverLat, 4.4);
-    expect(nested.driverLng, 9.5);
-  });
-
   testWidgets('driver dashboard fits mobile, tablet, and desktop layouts', (
     tester,
   ) async {
@@ -84,18 +63,18 @@ void main() {
             ),
           ),
         ],
-        child: const MaterialApp(
-          home: DeliveryDetailScreen(deliveryId: deliveryId),
-        ),
+        child: const MaterialApp(home: TrackerScreen(deliveryId: deliveryId)),
       ),
     );
 
     await tester.pumpAndSettle();
 
     expect(tester.takeException(), isNull);
-    expect(find.text('Customer location unavailable'), findsOneWidget);
-    expect(find.text('Waiting for a driver location'), findsOneWidget);
-    expect(find.text('Order ORD-42'), findsOneWidget);
+    expect(
+      find.text('Customer location is not available yet.'),
+      findsOneWidget,
+    );
+    expect(find.text('ORD-42'), findsOneWidget);
     expect(find.text('Start delivery'), findsOneWidget);
     expect(find.byType(CircularProgressIndicator), findsNothing);
   });

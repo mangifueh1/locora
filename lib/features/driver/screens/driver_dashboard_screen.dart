@@ -190,8 +190,12 @@ class _DriverDashboardScreenState extends ConsumerState<DriverDashboardScreen> {
                               _busyDeliveryIds.contains(delivery.id) ||
                               tracking.isLoading,
                           isTracking: tracking.isSharing,
-                          onOpen: () =>
-                              context.push('/driver/deliveries/${delivery.id}'),
+                          onOpen: () => context.push(
+                            Uri(
+                              path: '/track',
+                              queryParameters: {'deliveryId': delivery.id},
+                            ).toString(),
+                          ),
                           onStart: status == 'assigned'
                               ? () => _runDeliveryAction(
                                   delivery.id,

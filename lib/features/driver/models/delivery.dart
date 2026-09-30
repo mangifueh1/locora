@@ -8,6 +8,7 @@ class Delivery {
     this.customerLng,
     this.driverLat,
     this.driverLng,
+    this.updatedAt,
   });
 
   final String id;
@@ -18,16 +19,9 @@ class Delivery {
   final double? customerLng;
   final double? driverLat;
   final double? driverLng;
+  final DateTime? updatedAt;
 
   factory Delivery.fromJson(Map<String, dynamic> json) {
-    final driver = json['driver'];
-    final driverLat =
-        json['driver_lat'] ??
-        (driver is Map<String, dynamic> ? driver['lat'] : null);
-    final driverLng =
-        json['driver_lng'] ??
-        (driver is Map<String, dynamic> ? driver['lng'] : null);
-
     return Delivery(
       id: json['id'].toString(),
       orderId: json['order_id'].toString(),
@@ -35,8 +29,9 @@ class Delivery {
       businessName: json['business_name']?.toString(),
       customerLat: (json['customer_lat'] as num?)?.toDouble(),
       customerLng: (json['customer_lng'] as num?)?.toDouble(),
-      driverLat: (driverLat as num?)?.toDouble(),
-      driverLng: (driverLng as num?)?.toDouble(),
+      driverLat: (json['driver_lat'] as num?)?.toDouble(),
+      driverLng: (json['driver_lng'] as num?)?.toDouble(),
+      updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? ''),
     );
   }
 }

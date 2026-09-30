@@ -7,7 +7,6 @@ import 'package:locora/features/auth/screens/login_screen.dart';
 import 'package:locora/features/auth/screens/signup_screen.dart';
 import 'package:locora/features/business/screens/business_dashboard_screen.dart';
 import 'package:locora/features/driver/screens/driver_dashboard_screen.dart';
-import 'package:locora/features/driver/screens/delivery_detail_screen.dart';
 import 'package:locora/features/home/screens/homepage.dart';
 import 'package:locora/features/home/screens/contact.dart';
 import 'package:locora/features/docs/screens/api_docs_screen.dart';
@@ -35,6 +34,13 @@ final appRouter = GoRouter(
             const LocationPickerScreen(token: 'preview', isPreview: true),
       ),
     GoRoute(
+      path: '/track',
+      builder: (context, state) => TrackerScreen(
+        token: state.uri.queryParameters['token'],
+        deliveryId: state.uri.queryParameters['deliveryId'],
+      ),
+    ),
+    GoRoute(
       path: '/track/:token',
       builder: (context, state) {
         return TrackerScreen(token: state.pathParameters['token']!);
@@ -54,7 +60,7 @@ final appRouter = GoRouter(
       path: '/driver/deliveries/:id',
       name: '/driver/deliveries/:id',
       builder: (context, state) {
-        return DeliveryDetailScreen(deliveryId: state.pathParameters['id']!);
+        return TrackerScreen(deliveryId: state.pathParameters['id']!);
       },
     ),
     GoRoute(

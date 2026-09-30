@@ -61,6 +61,7 @@ class _TrackerMapState extends State<TrackerMap> {
       alignment: Alignment.center,
       children: [
         MapWidget(
+          styleUri: MapboxStyles.DARK,
           viewport: CameraViewportState(
             center: Point(
               coordinates: Position(
