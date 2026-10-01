@@ -6,8 +6,37 @@ import 'package:locora/features/driver/models/delivery.dart';
 import 'package:locora/features/driver/providers/driver_providers.dart';
 import 'package:locora/features/track/models/delivery_model.dart';
 import 'package:locora/features/track/providers/track_provider.dart';
+import 'package:locora/features/track/widgets/delivery_details_card.dart';
 
 void main() {
+  testWidgets('delivery details can be collapsed and expanded', (tester) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: DeliveryDetailsCard(
+            deliveryId: 'delivery-42',
+            orderId: 'ORD-42',
+            status: 'in_progress',
+            businessName: 'Acme Logistics',
+            assignment: 'assigned',
+            updatedAt: null,
+            isDriver: false,
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('ORD-42'), findsOneWidget);
+
+    await tester.tap(find.text('Acme Logistics'));
+    await tester.pumpAndSettle();
+    expect(find.text('ORD-42'), findsNothing);
+
+    await tester.tap(find.text('Acme Logistics'));
+    await tester.pumpAndSettle();
+    expect(find.text('ORD-42'), findsOneWidget);
+  });
+
   testWidgets('customer and driver routes share the tracking page', (
     tester,
   ) async {
