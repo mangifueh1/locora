@@ -10,10 +10,7 @@ void main() {
 
   test('includes both markers with numeric ids and roles', () {
     final json = jsonDecode(
-      trackMarkersGeoJson(
-        customerLocation: customer,
-        driverLocation: driver,
-      ),
+      trackMarkersGeoJson(customerLocation: customer, driverLocation: driver),
     ) as Map<String, dynamic>;
 
     expect(json['type'], 'FeatureCollection');
@@ -55,12 +52,61 @@ void main() {
     expect(features.single['properties']['role'], 'driver');
   });
 
-  test('returns an empty feature collection when both locations are missing', () {
+  test('includes route geometry before the endpoint markers', () {
+    final route = [
+      const LatLng(51.51, -0.13),
+      const LatLng(51.505, -0.125),
+      customer,
+    ];
     final json = jsonDecode(
-      trackMarkersGeoJson(customerLocation: null, driverLocation: null),
+      trackMarkersGeoJson(
+        customerLocation: customer,
+        driverLocation: driver,
+        routeGeometry: route,
+      ),
     ) as Map<String, dynamic>;
 
-    expect(json['type'], 'FeatureCollection');
-    expect(json['features'], isEmpty);
+    final features = json['features'] as List<dynamic>;
+    final routeFeature = features.first as Map<String, dynamic>;
+    expect(routeFeature['id'], 3);
+    expect(routeFeature['properties']['role'], 'route');
+    expect(routeFeature['geometry']['type'], 'LineString');
+    expect(routeFeature['geometry']['coordinates'], [
+      [-0.13, 51.51],
+      [-0.125, 51.505],
+      [-0.12, 51.5],
+    ]);
+    expect(
+      (features[1] as Map<String, dynamic>)['properties']['role'],
+      'customer',
+    );
+    expect(
+      (features[2] as Map<String, dynamic>)['properties']['role'],
+      'driver',
+    );
   });
+
+  test('omits a route when it has fewer than two points', () {
+    final json = jsonDecode(
+      trackMarkersGeoJson(
+        customerLocation: customer,
+        driverLocation: driver,
+        routeGeometry: [driver],
+      ),
+    ) as Map<String, dynamic>;
+
+    expect(json['features'], hasLength(2));
+  });
+
+  test(
+    'returns an empty feature collection when both locations are missing',
+    () {
+      final json = jsonDecode(
+        trackMarkersGeoJson(customerLocation: null, driverLocation: null),
+      ) as Map<String, dynamic>;
+
+      expect(json['type'], 'FeatureCollection');
+      expect(json['features'], isEmpty);
+    },
+  );
 }

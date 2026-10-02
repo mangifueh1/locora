@@ -7,8 +7,49 @@ import 'package:locora/features/driver/providers/driver_providers.dart';
 import 'package:locora/features/track/models/delivery_model.dart';
 import 'package:locora/features/track/providers/track_provider.dart';
 import 'package:locora/features/track/widgets/delivery_details_card.dart';
+import 'package:locora/features/track/widgets/tracking_page.dart';
 
 void main() {
+  testWidgets('tracking map key labels endpoint markers and route', (
+    tester,
+  ) async {
+    final semantics = tester.ensureSemantics();
+    try {
+      for (final width in [320.0, 390.0, 768.0, 1280.0]) {
+        tester.view.devicePixelRatio = 1;
+        tester.view.physicalSize = Size(width, 800);
+        await tester.pumpWidget(
+          MaterialApp(
+            home: Scaffold(
+              body: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 560),
+                  child: const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: TrackingMapKey(),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        );
+
+        expect(find.text('Driver'), findsOneWidget);
+        expect(find.text('Customer'), findsOneWidget);
+        expect(find.text('Route'), findsOneWidget);
+        expect(find.bySemanticsLabel('Map key'), findsOneWidget);
+        expect(find.bySemanticsLabel('Driver, red marker'), findsOneWidget);
+        expect(find.bySemanticsLabel('Customer, blue marker'), findsOneWidget);
+        expect(find.bySemanticsLabel('Route, teal line'), findsOneWidget);
+        expect(tester.takeException(), isNull, reason: 'width=$width');
+      }
+    } finally {
+      semantics.dispose();
+      tester.view.resetPhysicalSize();
+      tester.view.resetDevicePixelRatio();
+    }
+  });
+
   testWidgets('delivery details can be collapsed and expanded', (tester) async {
     await tester.pumpWidget(
       const MaterialApp(

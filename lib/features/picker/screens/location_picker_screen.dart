@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:locora/core/location/location_service.dart';
+import 'package:locora/core/routing/app_router.dart';
 import 'package:locora/features/picker/models/delivery_location.dart';
 import 'package:locora/features/picker/providers/picker_provider.dart';
 import 'package:locora/features/picker/widgets/location_picker_map_header.dart';
 import 'package:locora/features/picker/widgets/location_map.dart';
 import 'package:locora/features/picker/widgets/picker_confirmation_panel.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class LocationPickerScreen extends ConsumerStatefulWidget {
   const LocationPickerScreen({
@@ -99,26 +100,13 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
 
     if (!mounted || result == null) return;
 
-    final backendReturnUrl = result['return_url']?.toString();
+    final trackingLink = result['tracking_link']?.toString();
+    markPickerCompleted(widget.token, trackingLink);
 
-    final destination = backendReturnUrl ?? widget.returnUrl;
+    if (!mounted) return;
 
-    if (destination != null && destination.isNotEmpty) {
-      final uri = Uri.tryParse(destination);
-
-      if (uri != null) {
-        await launchUrl(uri);
-        return;
-      }
-    }
-
-    await showDialog<void>(
-      context: context,
-      builder: (_) => const AlertDialog(
-        title: Text('Location saved'),
-        content: Text('Your delivery location has been saved successfully.'),
-      ),
-    );
+    GoRouter.of(context)
+        .replace('/pick/${widget.token}/confirmed', extra: trackingLink);
   }
 
   @override
