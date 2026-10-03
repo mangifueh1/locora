@@ -3,7 +3,7 @@ import '../models/api_endpoint.dart';
 class ApiReferenceData {
   ApiReferenceData._();
 
-  static const baseUrl = 'https://locora-backend-914v.onrender.com/api/v1';
+  static const baseUrl = 'https://api.locora.site';
   static const localBaseUrl = 'http://localhost:4000/api/v1';
 
   static const categories = ApiEndpointCategory.values;
