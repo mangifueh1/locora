@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:locora/core/network/api_client.dart';
 import 'package:locora/features/auth/widgets/role_tab.dart';
 
 import 'package:locora/features/auth/providers/auth_providers.dart';
@@ -32,6 +33,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   bool _loading = false;
   String? _error;
+  bool _unverifiedBusiness = false;
   bool _obscurePassword = true;
 
   TextEditingController get _name =>
@@ -60,6 +62,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() {
       _role = role;
       _error = null;
+      _unverifiedBusiness = false;
     });
   }
 
@@ -72,6 +75,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() {
       _loading = true;
       _error = null;
+      _unverifiedBusiness = false;
     });
 
     try {
@@ -93,10 +97,296 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         context.pushReplacementNamed('/driver/dashboard');
       }
     } catch (error) {
-      if (mounted) setState(() => _error = error.toString());
+      if (mounted) {
+        setState(() {
+          _error = error.toString();
+          _unverifiedBusiness =
+              _role == LoginRole.business &&
+              error is ApiExeption &&
+              error.statusCode == 403;
+        });
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
+  }
+
+  Future<void> _showForgotPasswordDialog() async {
+    final emailController = TextEditingController();
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        var submitting = false;
+        var sent = false;
+        String? error;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            backgroundColor: AppColors.surfaceContainerLowest,
+            surfaceTintColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
+              side: BorderSide(color: AppColors.outlineVariant),
+            ),
+            titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+            contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+            actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            title: Row(
+              children: [
+                Icon(
+                  sent ? Icons.mark_email_read_outlined : Icons.lock_reset,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    sent ? 'Check your email' : 'Reset your password',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: AppColors.onSurface,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  sent
+                      ? 'If an account with that email exists, password reset instructions have been sent.'
+                      : 'Enter the email address for your business account.',
+                  style: Theme.of(context).textTheme.bodyMedium
+                      ?.copyWith(color: AppColors.onSurfaceVariant),
+                ),
+                if (!sent) ...[
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      hintText: 'you@example.com',
+                      prefixIcon: Icon(Icons.mail_outline),
+                      contentPadding: EdgeInsets.all(14),
+                      labelStyle: TextStyle(color: AppColors.tertiary),
+                      hintStyle: TextStyle(color: AppColors.outlineVariant),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(4)),
+                        borderSide: BorderSide(color: AppColors.outlineVariant),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(4)),
+                        borderSide: BorderSide(
+                          color: AppColors.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                    ),
+                  ),
+                  if (error != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ],
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                style: TextButton.styleFrom(
+                  foregroundColor: AppColors.tertiary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                onPressed: submitting
+                    ? null
+                    : () => Navigator.of(dialogContext).pop(),
+                child: Text(sent ? 'Done' : 'Cancel'),
+              ),
+              if (!sent)
+                FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: AppColors.onPrimary,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                  ),
+                  onPressed: submitting
+                      ? null
+                      : () async {
+                          final email = emailController.text.trim();
+                          if (email.isEmpty) {
+                            setDialogState(
+                              () => error = 'Enter your email address.',
+                            );
+                            return;
+                          }
+                          setDialogState(() {
+                            submitting = true;
+                            error = null;
+                          });
+                          try {
+                            await ref
+                                .read(authApiProvider)
+                                .requestBusinessPasswordReset(email: email);
+                            setDialogState(() => sent = true);
+                          } catch (requestError) {
+                            setDialogState(
+                              () => error = requestError.toString(),
+                            );
+                          } finally {
+                            setDialogState(() => submitting = false);
+                          }
+                        },
+                  child: submitting
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: AppColors.onPrimary,
+                          ),
+                        )
+                      : const Text('Send link'),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+    emailController.dispose();
+  }
+
+  Future<void> _showResendVerificationDialog() async {
+    final emailController = TextEditingController();
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        var submitting = false;
+        var sent = false;
+        String? error;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            backgroundColor: AppColors.surfaceContainerLowest,
+            surfaceTintColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
+              side: BorderSide(color: AppColors.outlineVariant),
+            ),
+            title: Row(
+              children: [
+                Icon(
+                  sent
+                      ? Icons.mark_email_read_outlined
+                      : Icons.mark_email_unread_outlined,
+                  color: AppColors.primary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    sent ? 'Check your email' : 'Resend verification email',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: AppColors.onSurface,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  sent
+                      ? 'If an unverified account with that email exists, verification instructions have been sent.'
+                      : 'Enter the email address used for your business account.',
+                  style: Theme.of(context).textTheme.bodyMedium
+                      ?.copyWith(color: AppColors.onSurfaceVariant),
+                ),
+                if (!sent) ...[
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    autofocus: true,
+                    decoration: const InputDecoration(
+                      labelText: 'Email',
+                      hintText: 'you@example.com',
+                      prefixIcon: Icon(Icons.mail_outline),
+                      contentPadding: EdgeInsets.all(14),
+                    ),
+                  ),
+                  if (error != null) ...[
+                    const SizedBox(height: 8),
+                    Text(
+                      error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ],
+                ],
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: submitting
+                    ? null
+                    : () => Navigator.of(dialogContext).pop(),
+                child: Text(sent ? 'Done' : 'Cancel'),
+              ),
+              if (!sent)
+                FilledButton(
+                  onPressed: submitting
+                      ? null
+                      : () async {
+                          final email = emailController.text.trim();
+                          if (email.isEmpty) {
+                            setDialogState(
+                              () => error = 'Enter your email address.',
+                            );
+                            return;
+                          }
+                          setDialogState(() {
+                            submitting = true;
+                            error = null;
+                          });
+                          try {
+                            await ref
+                                .read(authApiProvider)
+                                .resendBusinessVerification(email: email);
+                            setDialogState(() => sent = true);
+                          } catch (requestError) {
+                            setDialogState(
+                              () => error = requestError.toString(),
+                            );
+                          } finally {
+                            setDialogState(() => submitting = false);
+                          }
+                        },
+                  child: submitting
+                      ? const SizedBox.square(
+                          dimension: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Send link'),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+    emailController.dispose();
   }
 
   @override
@@ -230,18 +520,36 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                 ),
                               ),
                             ),
-                            // Align(
-                            //   alignment: Alignment.centerRight,
-                            //   child: TextButton(
-                            //     onPressed: _loading ? null : () {},
-                            //     child: const Text('Forgot password?'),
-                            //   ),
-                            // ),
+                            if (isBusiness)
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: TextButton(
+                                  onPressed: _loading
+                                      ? null
+                                      : _showForgotPasswordDialog,
+                                  child: const Text('Forgot password?'),
+                                ),
+                              ),
                             if (_error != null)
                               Text(
                                 _error!,
                                 style: TextStyle(
                                   color: theme.colorScheme.error,
+                                ),
+                              ),
+                            if (_unverifiedBusiness)
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: TextButton.icon(
+                                  onPressed: _loading
+                                      ? null
+                                      : _showResendVerificationDialog,
+                                  icon: const Icon(
+                                    Icons.mark_email_unread_outlined,
+                                  ),
+                                  label: const Text(
+                                    'Resend verification email',
+                                  ),
                                 ),
                               ),
                             const SizedBox(height: 8),

@@ -5,7 +5,7 @@ enum AuthScope { driver, business }
 class TokenStorage {
   static const _driverKey = 'driver_token';
   static const _businessKey = 'business_token';
-  static const _businessApiKey = 'business_api_key';
+  static const _legacyBusinessApiKey = 'business_api_key';
 
   Future<void> save(AuthScope scope, String token) async {
     final prefs = await SharedPreferences.getInstance();
@@ -34,13 +34,8 @@ class TokenStorage {
     await prefs.remove(key);
   }
 
-  Future<void> saveBusinessApiKey(String apiKey) async {
+  Future<void> clearLegacyBusinessApiKey() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(_businessApiKey, apiKey);
-  }
-
-  Future<String?> readBusinessApiKey() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString(_businessApiKey);
+    await prefs.remove(_legacyBusinessApiKey);
   }
 }

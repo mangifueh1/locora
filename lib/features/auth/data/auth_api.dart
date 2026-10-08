@@ -10,20 +10,15 @@ class AuthApi {
 
   Future<BusinessRegistration> registerBusiness({
     required String name,
+    required String email,
     required String password,
-    String? webhookUrl,
   }) async {
     final result = await _api.post(
       '/api/v1/businesses/register',
-      body: {
-        'name': name,
-        'password': password,
-        if (webhookUrl != null && webhookUrl.trim().isNotEmpty)
-          'webhook_url': webhookUrl.trim(),
-      },
+      body: {'name': name, 'email': email, 'password': password},
     );
 
-    return BusinessRegistration.fromJson(result);
+    return BusinessRegistration.fromJson(result, email: email);
   }
 
   Future<AuthLoginResponse> loginBusiness({
@@ -36,6 +31,34 @@ class AuthApi {
     );
 
     return AuthLoginResponse.fromJson(result);
+  }
+
+  Future<void> requestBusinessPasswordReset({required String email}) async {
+    await _api.post(
+      '/api/v1/businesses/forgot-password',
+      body: {'email': email},
+    );
+  }
+
+  Future<void> resetBusinessPassword({
+    required String token,
+    required String password,
+  }) async {
+    await _api.post(
+      '/api/v1/businesses/reset-password',
+      body: {'token': token, 'password': password},
+    );
+  }
+
+  Future<void> verifyBusinessEmail({required String token}) async {
+    await _api.post('/api/v1/businesses/verify-email', body: {'token': token});
+  }
+
+  Future<void> resendBusinessVerification({required String email}) async {
+    await _api.post(
+      '/api/v1/businesses/resend-verification',
+      body: {'email': email},
+    );
   }
 
   Future<DriverRegistration> registerDriver({

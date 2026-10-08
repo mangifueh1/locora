@@ -7,6 +7,20 @@ class BusinessApi {
 
   final ApiClient _api;
 
+  Future<String> businessId() async {
+    final result = await _api.get(
+      '/api/v1/businesses/me/api-key',
+      auth: RequestAuth.business,
+    );
+    final businessId = result['business_id']?.toString();
+    if (businessId == null || businessId.isEmpty) {
+      throw const FormatException(
+        'Business ID was not returned by the server.',
+      );
+    }
+    return businessId;
+  }
+
   Future<List<Driver>> drivers() async {
     final result = await _api.get(
       '/api/v1/businesses/me/drivers',

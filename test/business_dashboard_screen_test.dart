@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
+import 'package:locora/core/network/api_client.dart';
+import 'package:locora/core/storage/token_storage.dart';
+import 'package:locora/features/business/data/business_api.dart';
 import 'package:locora/features/business/models/business_dashboard_data.dart';
 import 'package:locora/features/business/providers/business_providers.dart';
 import 'package:locora/features/business/screens/business_dashboard_screen.dart';
@@ -35,20 +38,60 @@ void main() {
     tester.view.resetDevicePixelRatio();
   });
 
-  testWidgets('API key stays masked until explicitly shown', (tester) async {
+  testWidgets('API key generation requires confirmation and shows once', (
+    tester,
+  ) async {
     tester.view.devicePixelRatio = 1;
     tester.view.physicalSize = const Size(390, 844);
     await tester.pumpWidget(const _TestApp());
     await tester.pumpAndSettle();
 
     expect(find.text(_apiKey), findsNothing);
+    expect(find.text('Live API key'), findsNothing);
     expect(find.text(_businessId), findsOneWidget);
-    await tester.tap(find.byTooltip('Show API key'));
-    await tester.pump();
+    await tester.tap(find.text('Generate new API key'));
+    await tester.pumpAndSettle();
+    expect(
+      find.text(
+        'The current API key will stop working immediately. The new key will be shown once, so copy it to your server-side secrets.',
+      ),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(find.text(_apiKey), findsNothing);
+
+    await tester.tap(find.text('Generate new API key'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Generate key'));
+    await tester.pumpAndSettle();
     expect(find.text(_apiKey), findsOneWidget);
+    expect(find.text('Live API key'), findsNothing);
+    expect(find.text('Copy key'), findsOneWidget);
+
+    await tester.tap(find.text('Copy key'));
+    await tester.pumpAndSettle();
+    expect(find.text('Copied'), findsOneWidget);
+    await tester.tap(find.text('Close'));
+    await tester.pumpAndSettle();
+    expect(find.text(_apiKey), findsNothing);
 
     tester.view.resetPhysicalSize();
     tester.view.resetDevicePixelRatio();
+  });
+
+  testWidgets('credentials stay available when dashboard data fails', (
+    tester,
+  ) async {
+    await tester.pumpWidget(const _TestApp(failDashboard: true));
+    await tester.pumpAndSettle();
+
+    expect(find.text(_businessId), findsOneWidget);
+    expect(find.text('Generate new API key'), findsOneWidget);
+    expect(
+      find.textContaining('Could not load dashboard data:'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('header home button routes to homepage', (tester) async {
@@ -81,16 +124,42 @@ void main() {
 }
 
 class _TestApp extends StatelessWidget {
-  const _TestApp();
+  const _TestApp({this.failDashboard = false});
+
+  final bool failDashboard;
 
   @override
   Widget build(BuildContext context) => ProviderScope(
     overrides: [
-      businessDashboardProvider.overrideWith(_TestDashboardNotifier.new),
-      businessApiKeyProvider.overrideWith((ref) async => _apiKey),
+      businessDashboardProvider.overrideWith(
+        failDashboard
+            ? _FailedDashboardNotifier.new
+            : _TestDashboardNotifier.new,
+      ),
+      businessIdProvider.overrideWith((ref) async => _businessId),
+      businessApiProvider.overrideWith((ref) => _TestBusinessApi()),
     ],
     child: const MaterialApp(home: BusinessDashboardScreen()),
   );
+}
+
+class _FailedDashboardNotifier extends BusinessDashboardNotifier {
+  @override
+  Future<BusinessDashboardData> build() async =>
+      throw StateError('test failure');
+}
+
+class _TestBusinessApi extends BusinessApi {
+  _TestBusinessApi()
+    : super(
+        ApiClient(
+          baseUrl: 'https://example.invalid',
+          tokenStorage: TokenStorage(),
+        ),
+      );
+
+  @override
+  Future<String> regenerateApiKey() async => _apiKey;
 }
 
 class _TestDashboardNotifier extends BusinessDashboardNotifier {

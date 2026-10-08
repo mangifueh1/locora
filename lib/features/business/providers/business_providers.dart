@@ -13,18 +13,9 @@ final businessSessionProvider = Provider<BusinessSession>((ref) {
   return BusinessSession(ref.watch(tokenStorageProvider));
 });
 
-final businessApiKeyProvider = FutureProvider<String?>((ref) {
-  return ref.read(businessSessionProvider).readApiKey();
+final businessIdProvider = FutureProvider<String>((ref) {
+  return ref.read(businessApiProvider).businessId();
 });
-
-String? businessIdFromApiKey(String? apiKey) {
-  if (apiKey == null) return null;
-
-  final separatorIndex = apiKey.indexOf('.');
-  if (separatorIndex <= 0) return null;
-
-  return apiKey.substring(0, separatorIndex);
-}
 
 final businessDashboardProvider =
     AsyncNotifierProvider<BusinessDashboardNotifier, BusinessDashboardData>(
@@ -56,16 +47,9 @@ class BusinessSession {
 
   final TokenStorage _storage;
 
-  Future<void> saveToken(String token) {
-    return _storage.save(AuthScope.business, token);
-  }
-
-  Future<void> saveApiKey(String apiKey) {
-    return _storage.saveBusinessApiKey(apiKey);
-  }
-
-  Future<String?> readApiKey() {
-    return _storage.readBusinessApiKey();
+  Future<void> saveToken(String token) async {
+    await _storage.save(AuthScope.business, token);
+    await _storage.clearLegacyBusinessApiKey();
   }
 
   Future<void> logout() {

@@ -5,7 +5,6 @@ import 'package:locora/features/auth/widgets/role_tab.dart';
 
 import 'package:locora/features/auth/providers/auth_providers.dart';
 import 'package:locora/features/driver/providers/driver_providers.dart';
-import 'package:locora/features/business/providers/business_providers.dart';
 import 'package:locora/shared/theme/app_colors.dart';
 import 'package:locora/shared/widgets/buttons.dart';
 import 'package:locora/shared/widgets/locora_text_field.dart';
@@ -26,6 +25,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   late SignupRole _role;
 
   final _businessName = TextEditingController();
+  final _businessEmail = TextEditingController();
   final _driverName = TextEditingController();
   final _phone = TextEditingController();
   final _businessIdControllers = [TextEditingController()];
@@ -33,7 +33,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _driverPassword = TextEditingController();
   final _businessConfirmPassword = TextEditingController();
   final _driverConfirmPassword = TextEditingController();
-  final _webhookUrl = TextEditingController();
 
   bool _loading = false;
   String? _error;
@@ -55,6 +54,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   @override
   void dispose() {
     _businessName.dispose();
+    _businessEmail.dispose();
     _driverName.dispose();
     _phone.dispose();
     for (final controller in _businessIdControllers) {
@@ -64,7 +64,6 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     _driverPassword.dispose();
     _businessConfirmPassword.dispose();
     _driverConfirmPassword.dispose();
-    _webhookUrl.dispose();
     super.dispose();
   }
 
@@ -100,6 +99,11 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       .toList();
 
   Future<void> _signup() async {
+    if (_role == SignupRole.business && _businessEmail.text.trim().isEmpty) {
+      setState(() => _error = 'Please enter your business email address.');
+      return;
+    }
+
     if (_role == SignupRole.driver &&
         _businessIdControllers.any(
           (controller) => controller.text.trim().isEmpty,
@@ -132,13 +136,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             .read(authApiProvider)
             .registerBusiness(
               name: _businessName.text.trim(),
+              email: _businessEmail.text.trim(),
               password: password,
-              webhookUrl: _webhookUrl.text,
             );
-        await ref.read(businessSessionProvider).saveApiKey(registration.apiKey);
-
         if (!mounted) return;
-        context.pushReplacementNamed('/business/login');
+        context.pushReplacementNamed(
+          '/business/credentials',
+          extra: registration,
+        );
       } else {
         final result = await ref
             .read(authApiProvider)
@@ -263,6 +268,13 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                 hint: 'Acme Logistics, Metro Mart, etc.',
                                 textInputAction: TextInputAction.next,
                               ),
+                              LocoraTextField(
+                                label: 'Email',
+                                controller: _businessEmail,
+                                hint: 'you@example.com',
+                                keyboardType: TextInputType.emailAddress,
+                                textInputAction: TextInputAction.next,
+                              ),
                             ] else ...[
                               LocoraTextField(
                                 label: 'Full Name',
@@ -354,14 +366,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               obscureText: true,
                               textInputAction: TextInputAction.next,
                             ),
-                            if (_role == SignupRole.business)
-                              LocoraTextField(
-                                label: 'Webhook URL (optional)',
-                                controller: _webhookUrl,
-                                hint: 'https://example.com/webhook',
-                                keyboardType: TextInputType.url,
-                                textInputAction: TextInputAction.done,
-                              ),
+                            // Webhook URL is temporarily unavailable in signup.
+                            // LocoraTextField(
+                            //   label: 'Webhook URL (optional)',
+                            //   controller: _webhookUrl,
+                            //   hint: 'https://example.com/webhook',
+                            //   keyboardType: TextInputType.url,
+                            //   textInputAction: TextInputAction.done,
+                            // ),
                             if (_error != null) ...[
                               const SizedBox(height: 2),
                               Text(

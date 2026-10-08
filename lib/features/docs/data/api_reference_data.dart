@@ -20,8 +20,14 @@ class ApiReferenceData {
         ApiParameter(
           name: 'name',
           type: 'string',
-            description: 'Unique business name.', 
-            required: true,
+          description: 'Unique business name.',
+          required: true,
+        ),
+        ApiParameter(
+          name: 'email',
+          type: 'string',
+          description: 'Business email address.',
+          required: true,
         ),
         ApiParameter(
           name: 'password',
@@ -29,13 +35,8 @@ class ApiReferenceData {
           description: 'Dashboard password.',
           required: true,
         ),
-        ApiParameter(
-          name: 'webhook_url',
-          type: 'string | null',
-          description: 'Optional webhook destination.',
-        ),
       ],
-      requestExample: '{\n  "name": "Acme Meals",\n  "password": "StrongPassword123",\n  "webhook_url": "https://example.com/webhook"\n}',
+      requestExample: '{\n  "name": "Acme Meals",\n  "email": "ops@acme.example",\n  "password": "StrongPassword123"\n}',
       responseExample: '{\n  "business": { "id": "uuid", "name": "Acme Meals", "created_at": "timestamp" },\n  "api_key": "<businessId>.<rawKey>",\n  "note": "Store this API key now — it cannot be retrieved again."\n}',
       errors: [
         '400 Missing name or password',

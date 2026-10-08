@@ -5,6 +5,10 @@ import 'package:go_router/go_router.dart';
 
 import 'package:locora/core/routing/picker_session_store.dart';
 import 'package:locora/features/auth/screens/login_screen.dart';
+import 'package:locora/features/auth/models/business_registration.dart';
+import 'package:locora/features/auth/screens/reset_password_screen.dart';
+import 'package:locora/features/auth/screens/verify_email_screen.dart';
+import 'package:locora/features/auth/screens/business_credentials_screen.dart';
 import 'package:locora/features/auth/screens/signup_screen.dart';
 import 'package:locora/features/business/screens/business_dashboard_screen.dart';
 import 'package:locora/features/driver/screens/driver_dashboard_screen.dart';
@@ -60,6 +64,27 @@ final appRouter = GoRouter(
     GoRoute(path: '/contact', builder: (_, __) => const ContactScreen()),
     GoRoute(path: '/api-docs', builder: (_, __) => const ApiDocsScreen()),
     GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
+    GoRoute(
+      path: '/reset-password',
+      builder: (context, state) =>
+          ResetPasswordScreen(token: state.uri.queryParameters['token'] ?? ''),
+    ),
+    GoRoute(
+      path: '/verify-email',
+      builder: (context, state) =>
+          VerifyEmailScreen(token: state.uri.queryParameters['token'] ?? ''),
+    ),
+    GoRoute(
+      path: '/business/credentials',
+      name: '/business/credentials',
+      builder: (context, state) {
+        final registration = state.extra;
+        if (registration is! BusinessRegistration) {
+          return const LoginScreen();
+        }
+        return BusinessCredentialsScreen(registration: registration);
+      },
+    ),
     GoRoute(
       path: '/pick/:token',
       builder: (context, state) {

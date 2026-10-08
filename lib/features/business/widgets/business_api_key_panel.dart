@@ -1,22 +1,167 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'package:locora/shared/theme/app_colors.dart';
+
 class BusinessApiKeyPanel extends StatefulWidget {
   const BusinessApiKeyPanel({
     super.key,
     required this.businessId,
-    required this.apiKey,
+    required this.onRegenerate,
   });
 
   final String? businessId;
-  final String? apiKey;
+  final Future<String> Function() onRegenerate;
 
   @override
   State<BusinessApiKeyPanel> createState() => _BusinessApiKeyPanelState();
 }
 
 class _BusinessApiKeyPanelState extends State<BusinessApiKeyPanel> {
-  bool _isVisible = false;
+  bool _isRegenerating = false;
+
+  Future<void> _confirmRegeneration() async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppColors.surfaceContainerLowest,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(6),
+          side: BorderSide(color: AppColors.outlineVariant),
+        ),
+        titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+        contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+        title: Row(
+          children: [
+            const Icon(Icons.key_rounded, color: AppColors.primary),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                'Generate new API key?',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: AppColors.onSurface,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          'The current API key will stop working immediately. The new key will be shown once, so copy it to your server-side secrets.',
+          style: Theme.of(context).textTheme.bodyMedium
+              ?.copyWith(color: AppColors.onSurfaceVariant),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Generate key'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _isRegenerating = true);
+    try {
+      final newApiKey = await widget.onRegenerate();
+      if (!mounted) return;
+      await _showGeneratedKey(newApiKey);
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Could not replace API key: $error')),
+      );
+    } finally {
+      if (mounted) setState(() => _isRegenerating = false);
+    }
+  }
+
+  Future<void> _showGeneratedKey(String apiKey) async {
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        var copied = false;
+        return StatefulBuilder(
+          builder: (context, setDialogState) => AlertDialog(
+            backgroundColor: AppColors.surfaceContainerLowest,
+            surfaceTintColor: Colors.transparent,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(6),
+              side: BorderSide(color: AppColors.outlineVariant),
+            ),
+            titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+            contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
+            actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            title: Row(
+              children: [
+                const Icon(Icons.vpn_key_rounded, color: AppColors.primary),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Your new API key',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: AppColors.onSurface,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Copy and store this key now. It will not be shown again.',
+                  style: Theme.of(context).textTheme.bodyMedium
+                      ?.copyWith(color: AppColors.onSurfaceVariant),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.surfaceContainerLow,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: SelectableText(
+                    apiKey,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.onSurface,
+                      fontFamily: 'monospace',
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(),
+                child: const Text('Close'),
+              ),
+              FilledButton.icon(
+                onPressed: () async {
+                  await Clipboard.setData(ClipboardData(text: apiKey));
+                  setDialogState(() => copied = true);
+                },
+                icon: Icon(
+                  copied ? Icons.check_rounded : Icons.content_copy_rounded,
+                ),
+                label: Text(copied ? 'Copied' : 'Copy key'),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
   Future<void> _copyValue(String? value, String label) async {
     if (value == null) return;
@@ -30,13 +175,7 @@ class _BusinessApiKeyPanelState extends State<BusinessApiKeyPanel> {
   @override
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
-    final key = widget.apiKey;
     final businessId = widget.businessId;
-    final keyLabel = key == null
-        ? 'No API key stored'
-        : _isVisible
-        ? key
-        : '${key.substring(0, key.length < 8 ? key.length : 8)} ••••••••••••';
 
     return Container(
       padding: const EdgeInsets.all(18),
@@ -81,63 +220,31 @@ class _BusinessApiKeyPanelState extends State<BusinessApiKeyPanel> {
               ),
             ],
           ),
+          const SizedBox(height: 8),
+          Align(
+            alignment: Alignment.centerRight,
+            child: OutlinedButton.icon(
+              onPressed: _isRegenerating ? null : _confirmRegeneration,
+              icon: _isRegenerating
+                  ? const SizedBox.square(
+                      dimension: 16,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.autorenew_rounded),
+              label: Text(
+                _isRegenerating ? 'Generating...' : 'Generate new API key',
+              ),
+            ),
+          ),
           const SizedBox(height: 16),
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final fields = [
-                _CredentialValueField(
-                  label: 'Business ID',
-                  value: businessId ?? 'Unavailable',
-                  onCopy: () => _copyValue(businessId, 'Business ID'),
-                ),
-                _CredentialValueField(
-                  label: 'Live API key',
-                  value: keyLabel,
-                  actions: [
-                    if (key != null) ...[
-                      IconButton(
-                        tooltip: _isVisible ? 'Hide API key' : 'Show API key',
-                        onPressed: () =>
-                            setState(() => _isVisible = !_isVisible),
-                        icon: Icon(
-                          _isVisible
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                        ),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                      IconButton(
-                        tooltip: 'Copy API key',
-                        onPressed: () => _copyValue(key, 'API key'),
-                        icon: const Icon(Icons.content_copy_rounded),
-                        visualDensity: VisualDensity.compact,
-                      ),
-                    ],
-                  ],
-                ),
-              ];
-
-              if (constraints.maxWidth < 560) {
-                return Column(
-                  children: [fields[0], const SizedBox(height: 12), fields[1]],
-                );
-              }
-
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: fields[0]),
-                  const SizedBox(width: 14),
-                  Expanded(child: fields[1]),
-                ],
-              );
-            },
+          _CredentialValueField(
+            label: 'Business ID',
+            value: businessId ?? 'Unavailable',
+            onCopy: () => _copyValue(businessId, 'Business ID'),
           ),
           const SizedBox(height: 9),
           Text(
-            key == null
-                ? 'Add a production key to authenticate requests from your business application.'
-                : 'Keep this key private. It authenticates requests from your business application.',
+            'API keys are not stored in this app. Generate a new key to reveal it once; this invalidates the current key.',
             style: Theme.of(context).textTheme.bodySmall
                 ?.copyWith(color: colors.onSurfaceVariant),
           ),
