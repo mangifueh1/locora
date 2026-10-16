@@ -10,6 +10,7 @@ import 'package:locora/features/auth/models/driver_registration.dart';
 import 'package:locora/features/auth/providers/auth_providers.dart';
 import 'package:locora/features/auth/screens/business_credentials_screen.dart';
 import 'package:locora/features/auth/screens/signup_screen.dart';
+import 'package:locora/shared/widgets/locora_dialog.dart';
 
 void main() {
   testWidgets('switches between business and driver signup fields', (
@@ -36,6 +37,7 @@ void main() {
 
     expect(find.text('Full Name'), findsOneWidget);
     expect(find.text('Phone Number'), findsOneWidget);
+    expect(find.text('+237'), findsOneWidget);
     expect(find.text('Business ID'), findsOneWidget);
     expect(find.text('Business Name'), findsNothing);
     expect(find.text('Email'), findsNothing);
@@ -68,18 +70,56 @@ void main() {
       ),
     );
 
-    await tester.enterText(find.byType(TextField).at(0), 'Jamie Driver');
-    await tester.enterText(find.byType(TextField).at(1), '+237 600 000 001');
-    await tester.enterText(find.byType(TextField).at(3), 'password123');
-    await tester.enterText(find.byType(TextField).at(4), 'password123');
+    await tester.enterText(
+      _textFieldWithHint('Your full name'),
+      'Jamie Driver',
+    );
+    await tester.enterText(find.byType(TextFormField).first, '600000001');
+    await tester.enterText(
+      _textFieldWithHint('At least 8 characters'),
+      'password123',
+    );
+    await tester.enterText(
+      _textFieldWithHint('Re-enter password'),
+      'password123',
+    );
     await tester.ensureVisible(find.text('Create Driver Account ->'));
     await tester.tap(find.text('Create Driver Account ->'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Enter a business ID in each field.'), findsOneWidget);
+    expect(
+      find.text('Please accept the Privacy Policy and Terms of Service.'),
+      findsOneWidget,
+    );
     expect(authApi.submittedBusinessIds, isNull);
+    expect(authApi.submittedPhone, isNull);
 
-    await tester.enterText(find.byType(TextField).at(2), ' business-a ');
+    await tester.tap(find.byType(Checkbox));
+    await tester.pump();
+    await tester.ensureVisible(find.text('Create Driver Account ->'));
+    await tester.tap(find.text('Create Driver Account ->'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Confirm your phone number'), findsOneWidget);
+    expect(find.byType(LocoraDialog), findsOneWidget);
+    expect(find.textContaining('+237600000001'), findsOneWidget);
+    expect(authApi.submittedPhone, isNull);
+    await tester.tap(find.text('Change number'));
+    await tester.pumpAndSettle();
+    expect(authApi.submittedPhone, isNull);
+
+    await tester.ensureVisible(find.text('Create Driver Account ->'));
+    await tester.tap(find.text('Create Driver Account ->'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Yes, this is my number'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Enter a business ID in each field.'), findsOneWidget);
+
+    await tester.enterText(
+      _textFieldWithHint('Enter a business ID').first,
+      ' business-a ',
+    );
     await tester.pump();
     expect(find.byTooltip('Add business ID'), findsOneWidget);
     await tester.tap(find.byTooltip('Add business ID'));
@@ -87,7 +127,10 @@ void main() {
 
     expect(find.text('Business ID 2'), findsOneWidget);
     expect(find.byTooltip('Add business ID'), findsNothing);
-    await tester.enterText(find.byType(TextField).at(3), 'business-b');
+    await tester.enterText(
+      _textFieldWithHint('Enter a business ID').last,
+      'business-b',
+    );
     await tester.pump();
     expect(find.byTooltip('Add business ID'), findsOneWidget);
 
@@ -96,6 +139,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(authApi.submittedBusinessIds, ['business-a', 'business-b']);
+    expect(authApi.submittedPhone, '+237600000001');
     expect(find.text('Driver login'), findsOneWidget);
   });
 
@@ -132,6 +176,18 @@ void main() {
     await tester.tap(find.text('Create Business Account ->'));
     await tester.pumpAndSettle();
 
+    expect(
+      find.text('Please accept the Privacy Policy and Terms of Service.'),
+      findsOneWidget,
+    );
+    expect(authApi.submittedBusinessEmail, isNull);
+
+    await tester.tap(find.byType(Checkbox));
+    await tester.pump();
+    await tester.ensureVisible(find.text('Create Business Account ->'));
+    await tester.tap(find.text('Create Business Account ->'));
+    await tester.pumpAndSettle();
+
     expect(authApi.submittedBusinessEmail, 'ops@acme.example');
     expect(find.text('business-123'), findsOneWidget);
     expect(find.text('business-123.lk_live_one_time_secret'), findsOneWidget);
@@ -150,6 +206,10 @@ void main() {
   });
 }
 
+Finder _textFieldWithHint(String hint) => find.byWidgetPredicate(
+  (widget) => widget is TextField && widget.decoration?.hintText == hint,
+);
+
 class _RecordingAuthApi extends AuthApi {
   _RecordingAuthApi()
     : super(
@@ -160,6 +220,7 @@ class _RecordingAuthApi extends AuthApi {
       );
 
   List<String>? submittedBusinessIds;
+  String? submittedPhone;
   String? submittedBusinessEmail;
   String? resentVerificationEmail;
 
@@ -193,6 +254,7 @@ class _RecordingAuthApi extends AuthApi {
     required List<String> businessIds,
   }) async {
     submittedBusinessIds = businessIds;
+    submittedPhone = phone;
     return const DriverRegistration();
   }
 }

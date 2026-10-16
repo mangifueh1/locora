@@ -256,10 +256,33 @@ class ApiReferenceData {
         ),
       ],
       requestExample: '{\n  "order_id": "ORD-123",\n  "customer_phone": "+15551234567",\n  "customer_uid": "customer-42"\n}',
-      responseExample: '{\n  "requires_location": true,\n  "delivery_id": "uuid",\n  "picker_url": "https://your-frontend.com/pick/<pickerToken>",\n  "tracking_link": "https://your-frontend.com/track/<trackingToken>"\n}',
+      responseExample: '{\n  "requires_location": true,\n  "has_saved_location": true,\n  "delivery_id": "uuid",\n  "picker_url": "https://your-frontend.com/pick/<pickerToken>",\n  "tracking_link": "https://your-frontend.com/track/<trackingToken>"\n}',
       errors: [
         '400 Missing order ID or invalid phone',
         '401 Invalid business API key',
+      ],
+    ),
+    ApiEndpoint(
+      name: 'Get picker saved location',
+      method: 'GET',
+      path: '/deliveries/by-token/:token/location',
+      category: ApiEndpointCategory.delivery,
+      auth: 'Public',
+      description: 'Check whether the customer has a saved location before showing the map picker.',
+      parameters: [
+        ApiParameter(
+          name: 'token',
+          type: 'string',
+          description: 'Picker token.',
+          required: true,
+          location: 'path',
+        ),
+      ],
+      responseExample: '{\n  "saved_location": { "lat": 40.7128, "lng": -74.006, "address_description": "Blue gate beside the pharmacy" }\n}',
+      errors: [
+        '401 Picker link is invalid or expired',
+        '404 Delivery not found',
+        '409 Delivery is no longer awaiting a location',
       ],
     ),
     ApiEndpoint(
@@ -268,8 +291,7 @@ class ApiReferenceData {
       path: '/deliveries/by-token/:token/location',
       category: ApiEndpointCategory.delivery,
       auth: 'Public',
-      description:
-          'Save the customer’s selected coordinates from a picker link.',
+      description: 'Save the customer’s selected coordinates and optional address description from a picker link.',
       parameters: [
         ApiParameter(
           name: 'token',
@@ -290,8 +312,13 @@ class ApiReferenceData {
           description: 'Longitude coordinate.',
           required: true,
         ),
+        ApiParameter(
+          name: 'address_description',
+          type: 'string or null',
+          description: 'Optional landmark or delivery directions.',
+        ),
       ],
-      requestExample: '{\n  "lat": 40.7128,\n  "lng": -74.006\n}',
+      requestExample: '{\n  "lat": 40.7128,\n  "lng": -74.006,\n  "address_description": "Blue gate beside the pharmacy"\n}',
       responseExample: '{\n  "status": "success",\n  "tracking_link": "https://your-frontend.com/track/<trackingToken>"\n}',
       errors: [
         '400 Invalid coordinates',
@@ -442,6 +469,46 @@ class ApiReferenceData {
         ),
       ],
       responseExample: '{\n  "delivery": { "id": "uuid", "status": "delivered", "updated_at": "timestamp" }\n}',
+    ),
+    ApiEndpoint(
+      name: 'Update customer location',
+      method: 'PATCH',
+      path: '/customers/:phone/location',
+      category: ApiEndpointCategory.customer,
+      auth: 'Business API Key',
+      description: 'Update a customer’s saved coordinates and optional address description. Phone values are normalized internally.',
+      parameters: [
+        ApiParameter(
+          name: 'phone',
+          type: 'string',
+          description: 'Customer phone in a common format.',
+          required: true,
+          location: 'path',
+        ),
+        ApiParameter(
+          name: 'lat',
+          type: 'number',
+          description: 'Latitude coordinate.',
+          required: true,
+        ),
+        ApiParameter(
+          name: 'lng',
+          type: 'number',
+          description: 'Longitude coordinate.',
+          required: true,
+        ),
+        ApiParameter(
+          name: 'address_description',
+          type: 'string or null',
+          description: 'Optional landmark or delivery directions.',
+        ),
+      ],
+      requestExample: '{\n  "lat": 40.7128,\n  "lng": -74.006,\n  "address_description": "Blue gate beside the pharmacy"\n}',
+      responseExample: '{\n  "status": "updated",\n  "customer": { "id": "uuid", "lat": 40.7128, "lng": -74.006, "address_description": "Blue gate beside the pharmacy" }\n}',
+      errors: [
+        '400 Invalid phone number or coordinates',
+        '404 No customer with a saved location found for that phone number',
+      ],
     ),
     ApiEndpoint(
       name: 'Clear customer location',

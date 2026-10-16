@@ -10,24 +10,20 @@ class BusinessDashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final dashboard = ref.watch(businessDashboardProvider);
-    final businessId = ref
-        .watch(businessIdProvider)
-        .when(
-          data: (value) => value,
-          loading: () => null,
-          error: (error, stackTrace) => null,
-        );
+    final profile = ref.watch(businessProfileProvider);
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       body: BusinessDashboardContent(
         dashboard: dashboard,
-        businessId: businessId,
+        profile: profile.asData?.value,
+        isProfileLoading: profile.isLoading,
+        profileError: profile.hasError ? profile.error : null,
         onRegenerateApiKey: () =>
             ref.read(businessApiProvider).regenerateApiKey(),
         onRefresh: () async {
           ref.invalidate(businessDashboardProvider);
-          ref.invalidate(businessIdProvider);
+          ref.invalidate(businessProfileProvider);
           await ref.read(businessDashboardProvider.future);
         },
       ),

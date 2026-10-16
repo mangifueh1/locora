@@ -15,6 +15,7 @@ import 'package:locora/features/driver/screens/driver_dashboard_screen.dart';
 import 'package:locora/features/docs/screens/api_docs_screen.dart';
 import 'package:locora/features/home/screens/contact.dart';
 import 'package:locora/features/home/screens/homepage.dart';
+import 'package:locora/features/legal/screens/legal_documents_screen.dart';
 import 'package:locora/features/picker/screens/location_confirmed_screen.dart';
 import 'package:locora/features/picker/screens/location_picker_screen.dart';
 import 'package:locora/features/track/screens/tracker_screen.dart';
@@ -62,6 +63,8 @@ final appRouter = GoRouter(
   routes: [
     GoRoute(path: '/', builder: (_, __) => const Homepage()),
     GoRoute(path: '/contact', builder: (_, __) => const ContactScreen()),
+    GoRoute(path: '/terms', builder: (_, __) => const TermsOfServiceScreen()),
+    GoRoute(path: '/privacy', builder: (_, __) => const PrivacyPolicyScreen()),
     GoRoute(path: '/api-docs', builder: (_, __) => const ApiDocsScreen()),
     GoRoute(path: '/login', builder: (_, __) => const LoginScreen()),
     GoRoute(

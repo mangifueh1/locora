@@ -1,6 +1,9 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:locora/core/network/connectivity_provider.dart';
 import 'package:locora/core/routing/app_router.dart';
 import 'package:locora/features/driver/models/delivery.dart';
 import 'package:locora/features/driver/providers/driver_providers.dart';
@@ -138,6 +141,62 @@ void main() {
     expect(find.text('Start delivery'), findsOneWidget);
   });
 
+  testWidgets('offline warning appears on both routes and clears on reconnect', (
+    tester,
+  ) async {
+    const token = 'public-token-offline';
+    const offlineMessage =
+        'No active connection. Connect to Wi-Fi or mobile data to keep tracking.';
+    const delivery = DeliveryModel(
+      id: 'delivery-42',
+      orderId: 'ORD-42',
+      status: 'in_progress',
+      businessName: 'Acme Logistics',
+      customerLocation: null,
+      driverLocation: null,
+      assignment: 'assigned',
+    );
+    final connectivityController = StreamController<bool>.broadcast();
+    addTearDown(connectivityController.close);
+
+    appRouter.go('/track/$token');
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          deviceConnectivityProvider.overrideWith(
+            (ref) => connectivityController.stream,
+          ),
+          trackingProvider(token).overrideWith((ref) async => delivery),
+          driverDeliveryDetailProvider('delivery-42').overrideWith(
+            (ref) async => const Delivery(
+              id: 'delivery-42',
+              orderId: 'ORD-42',
+              status: 'assigned',
+            ),
+          ),
+        ],
+        child: MaterialApp.router(routerConfig: appRouter),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    connectivityController.add(true);
+    await tester.pump();
+    expect(find.text(offlineMessage), findsNothing);
+
+    connectivityController.add(false);
+    await tester.pump();
+    expect(find.text(offlineMessage), findsOneWidget);
+
+    appRouter.go('/track?deliveryId=delivery-42');
+    await tester.pumpAndSettle();
+    expect(find.text(offlineMessage), findsOneWidget);
+
+    connectivityController.add(true);
+    await tester.pumpAndSettle();
+    expect(find.text(offlineMessage), findsNothing);
+  });
+
   test('tracking models read driver coordinates returned by the API', () {
     final publicDelivery = DeliveryModel.fromJson({
       'id': 'delivery-42',
@@ -145,7 +204,13 @@ void main() {
       'status': 'in_progress',
       'customer_lat': 4.1,
       'customer_lng': 9.2,
-      'driver': {'id': 'driver-1', 'lat': 4.2, 'lng': 9.3},
+      'driver': {
+        'id': 'driver-1',
+        'name': 'Alex Driver',
+        'phone': '+15551234567',
+        'lat': 4.2,
+        'lng': 9.3,
+      },
       'assignment': 'assigned',
     });
     final driverDelivery = Delivery.fromJson({
@@ -161,6 +226,8 @@ void main() {
 
     expect(publicDelivery.driverLocation?.latitude, 4.2);
     expect(publicDelivery.driverLocation?.longitude, 9.3);
+    expect(publicDelivery.driverName, 'Alex Driver');
+    expect(publicDelivery.driverPhone, '+15551234567');
     expect(driverDelivery.driverLat, 4.2);
     expect(driverDelivery.driverLng, 9.3);
     expect(driverDelivery.updatedAt, DateTime.utc(2026, 9, 29, 12));

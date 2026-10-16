@@ -4,6 +4,7 @@ import 'package:locora/core/providers.dart';
 import 'package:locora/core/storage/token_storage.dart';
 import 'package:locora/features/business/data/business_api.dart';
 import 'package:locora/features/business/models/business_dashboard_data.dart';
+import 'package:locora/features/business/models/business_profile.dart';
 
 final businessApiProvider = Provider<BusinessApi>((ref) {
   return BusinessApi(ref.watch(apiClientProvider));
@@ -13,8 +14,8 @@ final businessSessionProvider = Provider<BusinessSession>((ref) {
   return BusinessSession(ref.watch(tokenStorageProvider));
 });
 
-final businessIdProvider = FutureProvider<String>((ref) {
-  return ref.read(businessApiProvider).businessId();
+final businessProfileProvider = FutureProvider<BusinessProfile>((ref) {
+  return ref.read(businessApiProvider).profile();
 });
 
 final businessDashboardProvider =
@@ -31,11 +32,14 @@ class BusinessDashboardNotifier extends AsyncNotifier<BusinessDashboardData> {
   Future<BusinessDashboardData> load() async {
     final api = ref.read(businessApiProvider);
     final drivers = await api.drivers();
-    final deliveries = await api.deliveries(status: 'pending');
+    final deliveries = await api.deliveries();
 
     final data = BusinessDashboardData(
       drivers: drivers,
-      pendingDeliveries: deliveries,
+      pendingDeliveries: deliveries
+          .where((delivery) => delivery.status.toLowerCase() == 'pending')
+          .toList(),
+      deliveries: deliveries,
     );
     state = AsyncData(data);
     return data;

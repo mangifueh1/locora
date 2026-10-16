@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:locora/features/auth/widgets/role_tab.dart';
+import 'package:locora/features/auth/widgets/driver_phone_field.dart';
 
 import 'package:locora/features/auth/providers/auth_providers.dart';
 import 'package:locora/features/driver/providers/driver_providers.dart';
 import 'package:locora/shared/theme/app_colors.dart';
 import 'package:locora/shared/widgets/buttons.dart';
+import 'package:locora/shared/widgets/locora_dialog.dart';
 import 'package:locora/shared/widgets/locora_text_field.dart';
 import 'package:locora/shared/widgets/navbar.dart';
 
@@ -28,6 +30,8 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _businessEmail = TextEditingController();
   final _driverName = TextEditingController();
   final _phone = TextEditingController();
+  String _driverPhoneNumber = '';
+  String? _confirmedDriverPhoneNumber;
   final _businessIdControllers = [TextEditingController()];
   final _businessPassword = TextEditingController();
   final _driverPassword = TextEditingController();
@@ -35,8 +39,10 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
   final _driverConfirmPassword = TextEditingController();
 
   bool _loading = false;
+  bool _acceptedLegalTerms = false;
   String? _error;
   String? _businessIdsError;
+  String? _consentError;
 
   TextEditingController get _password =>
       _role == SignupRole.business ? _businessPassword : _driverPassword;
@@ -99,6 +105,41 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       .toList();
 
   Future<void> _signup() async {
+    if (!_acceptedLegalTerms) {
+      setState(
+        () => _consentError =
+            'Please accept the Privacy Policy and Terms of Service.',
+      );
+      return;
+    }
+
+    if (_role == SignupRole.driver &&
+        _confirmedDriverPhoneNumber != _driverPhoneNumber) {
+      if (_driverPhoneNumber.trim().isEmpty) {
+        setState(() => _error = 'Please enter your phone number.');
+        return;
+      }
+
+      final confirmed = await LocoraDialog.show<bool>(
+        context: context,
+        title: const Text('Confirm your phone number'),
+        icon: Icons.phone_android,
+        content: Text('Does this number belong to you?\n\n$_driverPhoneNumber'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Change number'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Yes, this is my number'),
+          ),
+        ],
+      );
+      if (!mounted || confirmed != true) return;
+      _confirmedDriverPhoneNumber = _driverPhoneNumber;
+    }
+
     if (_role == SignupRole.business && _businessEmail.text.trim().isEmpty) {
       setState(() => _error = 'Please enter your business email address.');
       return;
@@ -149,7 +190,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
             .read(authApiProvider)
             .registerDriver(
               name: _driverName.text.trim(),
-              phone: _phone.text.trim(),
+              phone: _driverPhoneNumber,
               password: password,
               businessIds: _businessIds,
             );
@@ -282,11 +323,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                                 hint: 'Your full name',
                                 textInputAction: TextInputAction.next,
                               ),
-                              LocoraTextField(
-                                label: 'Phone Number',
+                              DriverPhoneField(
                                 controller: _phone,
-                                hint: '+1 555 123 4567',
-                                keyboardType: TextInputType.phone,
+                                onChanged: (phone) {
+                                  if (phone != _driverPhoneNumber) {
+                                    _confirmedDriverPhoneNumber = null;
+                                  }
+                                  _driverPhoneNumber = phone;
+                                },
                                 textInputAction: TextInputAction.next,
                               ),
                               for (
@@ -366,6 +410,65 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                               obscureText: true,
                               textInputAction: TextInputAction.next,
                             ),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Checkbox(
+                                  value: _acceptedLegalTerms,
+                                  onChanged: _loading
+                                      ? null
+                                      : (accepted) => setState(() {
+                                          _acceptedLegalTerms =
+                                              accepted ?? false;
+                                          _consentError = null;
+                                        }),
+                                ),
+                                Expanded(
+                                  child: Padding(
+                                    padding: const EdgeInsets.only(top: 12),
+                                    child: Wrap(
+                                      children: [
+                                        const Text('I accept the '),
+                                        InkWell(
+                                          onTap: () => context.push('/privacy'),
+                                          child: Text(
+                                            'Privacy Policy',
+                                            style: TextStyle(
+                                              color: theme.colorScheme.primary,
+                                              decoration:
+                                                  TextDecoration.underline,
+                                            ),
+                                          ),
+                                        ),
+                                        const Text(' and '),
+                                        InkWell(
+                                          onTap: () => context.push('/terms'),
+                                          child: Text(
+                                            'Terms of Service',
+                                            style: TextStyle(
+                                              color: theme.colorScheme.primary,
+                                              decoration:
+                                                  TextDecoration.underline,
+                                            ),
+                                          ),
+                                        ),
+                                        const Text('.'),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            if (_consentError != null)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 12),
+                                child: Text(
+                                  _consentError!,
+                                  style: TextStyle(
+                                    color: theme.colorScheme.error,
+                                  ),
+                                ),
+                              ),
                             // Webhook URL is temporarily unavailable in signup.
                             // LocoraTextField(
                             //   label: 'Webhook URL (optional)',

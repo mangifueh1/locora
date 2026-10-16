@@ -2,139 +2,311 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:locora/features/business/models/business_dashboard_data.dart';
-import 'package:locora/features/business/widgets/business_api_key_panel.dart';
+import 'package:locora/features/business/models/business_profile.dart';
 import 'package:locora/features/business/widgets/business_dashboard_header.dart';
-import 'package:locora/features/business/widgets/dashboard_metric_card.dart';
+import 'package:locora/features/business/widgets/business_dashboard_metrics.dart';
+import 'package:locora/features/business/widgets/business_dashboard_sidebar.dart';
+import 'package:locora/features/business/widgets/business_dashboard_top_bar.dart';
+import 'package:locora/features/business/widgets/business_delivery_ledger.dart';
+import 'package:locora/features/business/widgets/business_deliveries_content.dart';
+import 'package:locora/features/business/widgets/business_drivers_content.dart';
+import 'package:locora/features/business/widgets/business_settings_content.dart';
 import 'package:locora/features/business/widgets/dispatch_queue_panel.dart';
 import 'package:locora/features/business/widgets/driver_roster_panel.dart';
 
-class BusinessDashboardContent extends StatelessWidget {
+class BusinessDashboardContent extends StatefulWidget {
   const BusinessDashboardContent({
     super.key,
     required this.dashboard,
-    required this.businessId,
+    required this.profile,
+    required this.isProfileLoading,
+    required this.profileError,
     required this.onRegenerateApiKey,
     required this.onRefresh,
   });
 
   final AsyncValue<BusinessDashboardData> dashboard;
-  final String? businessId;
+  final BusinessProfile? profile;
+  final bool isProfileLoading;
+  final Object? profileError;
   final Future<String> Function() onRegenerateApiKey;
   final Future<void> Function() onRefresh;
 
   @override
-  Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: onRefresh,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final isWide = constraints.maxWidth >= 820;
-          final horizontalPadding = constraints.maxWidth >= 1000 ? 32.0 : 20.0;
+  State<BusinessDashboardContent> createState() =>
+      _BusinessDashboardContentState();
+}
 
-          return SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(
-              horizontalPadding,
-              28,
-              horizontalPadding,
-              36,
-            ),
-            child: Center(
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1240),
+class _BusinessDashboardContentState extends State<BusinessDashboardContent> {
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  final GlobalKey _dashboardKey = GlobalKey();
+  final GlobalKey _deliveriesKey = GlobalKey();
+  final GlobalKey _driversKey = GlobalKey();
+  final ScrollController _scrollController = ScrollController();
+
+  String _selectedSection = 'Dashboard';
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _navigateTo(String section) {
+    setState(() => _selectedSection = section);
+    if (section == 'Settings' ||
+        section == 'Dashboard' ||
+        section == 'Drivers' ||
+        section == 'Deliveries') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) _scrollController.jumpTo(0);
+      });
+      return;
+    }
+
+    final target = switch (section) {
+      'Deliveries' => _deliveriesKey,
+      _ => _dashboardKey,
+    };
+    final targetContext = target.currentContext;
+    if (targetContext != null) {
+      Scrollable.ensureVisible(
+        targetContext,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        alignment: 0.02,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = constraints.maxWidth >= 920;
+        final dashboardData = widget.dashboard.asData?.value;
+        final colors = Theme.of(context).colorScheme;
+
+        return Scaffold(
+          key: _scaffoldKey,
+          backgroundColor: colors.surface,
+          drawer: wide
+              ? null
+              : Drawer(
+                  width: 276,
+                  child: BusinessDashboardSidebar(
+                    selectedSection: _selectedSection,
+                    profile: widget.profile,
+                    onNavigate: _navigateTo,
+                    isDrawer: true,
+                  ),
+                ),
+          body: Row(
+            children: [
+              if (wide)
+                SizedBox(
+                  width: 220,
+                  child: BusinessDashboardSidebar(
+                    selectedSection: _selectedSection,
+                    profile: widget.profile,
+                    onNavigate: _navigateTo,
+                  ),
+                ),
+              Expanded(
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    BusinessDashboardHeader(onRefresh: onRefresh),
-                    const SizedBox(height: 26),
-                    BusinessApiKeyPanel(
-                      businessId: businessId,
-                      onRegenerate: onRegenerateApiKey,
+                    BusinessDashboardTopBar(
+                      profile: widget.profile,
+                      isLoading: widget.isProfileLoading,
+                      error: widget.profileError,
                     ),
-                    const SizedBox(height: 18),
-                    ...dashboard.when(
-                      data: (data) =>
-                          _dashboardSections(context, data, isWide: isWide),
-                      loading: () => [
-                        const Padding(
-                          padding: EdgeInsets.all(24),
-                          child: Center(child: CircularProgressIndicator()),
+                    Expanded(
+                      child: RefreshIndicator(
+                        onRefresh: widget.onRefresh,
+                        child: SingleChildScrollView(
+                          controller: _scrollController,
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          padding: EdgeInsets.fromLTRB(
+                            wide ? 30 : 18,
+                            wide ? 28 : 20,
+                            wide ? 30 : 18,
+                            36,
+                          ),
+                          child: Center(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(maxWidth: 1320),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                mainAxisAlignment: MainAxisAlignment.start,
+                                children: [
+                                  if (_selectedSection == 'Settings')
+                                    BusinessSettingsContent(
+                                      profile: widget.profile,
+                                      onRegenerateApiKey:
+                                          widget.onRegenerateApiKey,
+                                      onMenuTap: wide
+                                          ? null
+                                          : () => _scaffoldKey.currentState
+                                                ?.openDrawer(),
+                                    )
+                                  else if (_selectedSection == 'Drivers')
+                                    BusinessDriversContent(
+                                      drivers:
+                                          dashboardData?.drivers ?? const [],
+                                      deliveries:
+                                          dashboardData?.allDeliveries ??
+                                          const [],
+                                      isLoading: widget.dashboard.isLoading,
+                                      error: widget.dashboard.hasError
+                                          ? widget.dashboard.error
+                                          : null,
+                                      onMenuTap: wide
+                                          ? null
+                                          : () => _scaffoldKey.currentState
+                                                ?.openDrawer(),
+                                    )
+                                  else if (_selectedSection == 'Deliveries')
+                                    BusinessDeliveriesContent(
+                                      deliveries:
+                                          dashboardData?.allDeliveries ??
+                                          const [],
+                                      isLoading: widget.dashboard.isLoading,
+                                      error: widget.dashboard.hasError
+                                          ? widget.dashboard.error
+                                          : null,
+                                      onMenuTap: wide
+                                          ? null
+                                          : () => _scaffoldKey.currentState
+                                                ?.openDrawer(),
+                                    )
+                                  else ...[
+                                    KeyedSubtree(
+                                      key: _dashboardKey,
+                                      child: BusinessDashboardHeader(
+                                        onRefresh: widget.onRefresh,
+                                        onMenuTap: wide
+                                            ? null
+                                            : () => _scaffoldKey.currentState
+                                                  ?.openDrawer(),
+                                      ),
+                                    ),
+                                    const SizedBox(height: 24),
+                                    if (dashboardData != null) ...[
+                                      BusinessDashboardMetrics(
+                                        totalDeliveries:
+                                            dashboardData.allDeliveries.length,
+                                        activeDeliveries: dashboardData
+                                            .allDeliveries
+                                            .where((delivery) {
+                                              final status = delivery.status
+                                                  .toLowerCase();
+                                              return status == 'pending' ||
+                                                  status == 'accepted' ||
+                                                  status == 'in_transit';
+                                            })
+                                            .length,
+                                        registeredDrivers:
+                                            dashboardData.drivers.length,
+                                        completedDeliveries: dashboardData
+                                            .allDeliveries
+                                            .where(
+                                              (delivery) =>
+                                                  delivery.status
+                                                      .toLowerCase() ==
+                                                  'completed',
+                                            )
+                                            .length,
+                                      ),
+                                      const SizedBox(height: 20),
+                                      if (wide)
+                                        Row(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Expanded(
+                                              flex: 3,
+                                              child: DispatchQueuePanel(
+                                                deliveries: dashboardData
+                                                    .pendingDeliveries,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 18),
+                                            Expanded(
+                                              flex: 2,
+                                              child: KeyedSubtree(
+                                                key: _driversKey,
+                                                child: DriverRosterPanel(
+                                                  drivers:
+                                                      dashboardData.drivers,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        )
+                                      else ...[
+                                        DispatchQueuePanel(
+                                          deliveries:
+                                              dashboardData.pendingDeliveries,
+                                        ),
+                                        const SizedBox(height: 18),
+                                        KeyedSubtree(
+                                          key: _driversKey,
+                                          child: DriverRosterPanel(
+                                            drivers: dashboardData.drivers,
+                                          ),
+                                        ),
+                                      ],
+                                      const SizedBox(height: 20),
+                                      KeyedSubtree(
+                                        key: _deliveriesKey,
+                                        child: BusinessDeliveryLedger(
+                                          deliveries:
+                                              dashboardData.allDeliveries,
+                                        ),
+                                      ),
+                                    ] else if (widget.dashboard.isLoading) ...[
+                                      const Padding(
+                                        padding: EdgeInsets.symmetric(
+                                          vertical: 48,
+                                        ),
+                                        child: Center(
+                                          child: CircularProgressIndicator(),
+                                        ),
+                                      ),
+                                    ] else ...[
+                                      Container(
+                                        padding: const EdgeInsets.all(18),
+                                        decoration: BoxDecoration(
+                                          color: colors.surfaceContainerLowest,
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          'Could not load dashboard data: '
+                                          '${widget.dashboard.error}',
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodyMedium
+                                              ?.copyWith(color: colors.error),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
-                      ],
-                      error: (error, stackTrace) => [
-                        Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Text('Could not load dashboard data: $error'),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
               ),
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  List<Widget> _dashboardSections(
-    BuildContext context,
-    BusinessDashboardData data, {
-    required bool isWide,
-  }) {
-    return [
-      LayoutBuilder(
-        builder: (context, constraints) {
-          final metrics = [
-            DashboardMetricCard(
-              label: 'Registered drivers',
-              value: '${data.drivers.length}',
-              detail: 'Drivers on your roster',
-              icon: Icons.badge_outlined,
-              accent: Theme.of(context).colorScheme.primary,
-            ),
-            DashboardMetricCard(
-              label: 'Pending deliveries',
-              value: '${data.pendingDeliveries.length}',
-              detail: 'Waiting in the dispatch queue',
-              icon: Icons.pending_actions_rounded,
-              accent: Theme.of(context).colorScheme.secondary,
-            ),
-          ];
-
-          if (constraints.maxWidth < 560) {
-            return Column(
-              children: [metrics[0], const SizedBox(height: 12), metrics[1]],
-            );
-          }
-
-          return Row(
-            children: [
-              Expanded(child: metrics[0]),
-              const SizedBox(width: 14),
-              Expanded(child: metrics[1]),
             ],
-          );
-        },
-      ),
-      const SizedBox(height: 18),
-      if (isWide)
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(child: DriverRosterPanel(drivers: data.drivers)),
-            const SizedBox(width: 18),
-            Expanded(
-              child: DispatchQueuePanel(deliveries: data.pendingDeliveries),
-            ),
-          ],
-        )
-      else ...[
-        DriverRosterPanel(drivers: data.drivers),
-        const SizedBox(height: 18),
-        DispatchQueuePanel(deliveries: data.pendingDeliveries),
-      ],
-    ];
+          ),
+        );
+      },
+    );
   }
 }

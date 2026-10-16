@@ -10,6 +10,8 @@ class DeliveryDetailsCard extends StatefulWidget {
     required this.assignment,
     required this.updatedAt,
     required this.isDriver,
+    this.driverName,
+    this.driverPhone,
   });
 
   final String deliveryId;
@@ -19,6 +21,8 @@ class DeliveryDetailsCard extends StatefulWidget {
   final String assignment;
   final DateTime? updatedAt;
   final bool isDriver;
+  final String? driverName;
+  final String? driverPhone;
 
   @override
   State<DeliveryDetailsCard> createState() => _DeliveryDetailsCardState();
@@ -83,7 +87,18 @@ class _DeliveryDetailsCardState extends State<DeliveryDetailsCard> {
                         _DetailRow(label: 'Order', value: widget.orderId),
                         _DetailRow(label: 'Delivery', value: widget.deliveryId),
                         if (!widget.isDriver)
-                          _DetailRow(label: 'Driver', value: widget.assignment),
+                          _DetailRow(
+                            label: 'Driver',
+                            value: widget.driverName?.trim().isNotEmpty == true
+                                ? widget.driverName!.trim()
+                                : widget.assignment,
+                          ),
+                        if (!widget.isDriver &&
+                            widget.driverPhone?.trim().isNotEmpty == true)
+                          _DetailRow(
+                            label: 'Phone',
+                            value: widget.driverPhone!.trim(),
+                          ),
                         if (widget.updatedAt != null)
                           _DetailRow(
                             label: 'Last updated',

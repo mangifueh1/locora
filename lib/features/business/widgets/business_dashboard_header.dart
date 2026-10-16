@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 class BusinessDashboardHeader extends StatelessWidget {
-  const BusinessDashboardHeader({super.key, required this.onRefresh});
+  const BusinessDashboardHeader({
+    super.key,
+    required this.onRefresh,
+    this.onMenuTap,
+  });
 
   final Future<void> Function() onRefresh;
+  final VoidCallback? onMenuTap;
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +23,7 @@ class BusinessDashboardHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'OPERAIONAL OVERVIEW',
+                'OPERATIONAL OVERVIEW',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                   color: colors.primary,
                   fontWeight: FontWeight.w700,
@@ -46,6 +51,18 @@ class BusinessDashboardHeader extends StatelessWidget {
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (onMenuTap != null) ...[
+              IconButton(
+                tooltip: 'Open navigation sidebar',
+                onPressed: onMenuTap,
+                icon: const Icon(Icons.menu_rounded),
+                style: IconButton.styleFrom(
+                  backgroundColor: colors.surfaceContainerLowest,
+                  foregroundColor: colors.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(width: 4),
+            ],
             IconButton(
               tooltip: 'Back to home',
               onPressed: () => context.go('/'),
