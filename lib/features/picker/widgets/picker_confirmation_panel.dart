@@ -111,35 +111,20 @@ class PickerConfirmationPanel extends StatelessWidget {
                 const SizedBox(height: 16),
                 _SelectedLocation(coordinates: coordinates),
                 const SizedBox(height: 17),
-                // _FieldLabel(label: 'Location description', required: false),
-                // const SizedBox(height: 7),
-                // TextFormField(
-                //   controller: descriptionController,
-                //   textCapitalization: TextCapitalization.sentences,
-                //   validator: (value) => value == null || value.trim().isEmpty
-                //       ? 'Add a landmark or directions for the courier.'
-                //       : null,
-                //   decoration: const InputDecoration(
-                //     prefixIcon: Icon(Icons.meeting_room_outlined),
-                //     hintText: 'e.g. Blue gate beside the pharmacy',
-                //   ),
-                // ),
-                // const SizedBox(height: 7),
-                // Row(
-                //   crossAxisAlignment: CrossAxisAlignment.start,
-                //   children: [
-                //     Icon(Icons.info_outline, size: 15, color: colors.tertiary),
-                //     const SizedBox(width: 6),
-                //     Expanded(
-                //       child: Text(
-                //         'Help the driver recognize your drop-off spot swiftly.',
-                //         style: Theme.of(context).textTheme.bodySmall
-                //             ?.copyWith(color: colors.onSurfaceVariant),
-                //       ),
-                //     ),
-                //   ],
-                // ),
-                // const SizedBox(height: 15),
+                const _FieldLabel(
+                  label: 'Address description',
+                  required: false,
+                ),
+                const SizedBox(height: 7),
+                TextFormField(
+                  controller: descriptionController,
+                  textCapitalization: TextCapitalization.sentences,
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.meeting_room_outlined),
+                    hintText: 'e.g. Blue gate beside the pharmacy',
+                  ),
+                ),
+                const SizedBox(height: 15),
                 // const _FieldLabel(label: 'Delivery notes', required: false),
                 // const SizedBox(height: 7),
                 // TextFormField(

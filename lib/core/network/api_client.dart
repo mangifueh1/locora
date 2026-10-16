@@ -72,6 +72,22 @@ class ApiClient {
     return _decode(response);
   }
 
+  Future<Map<String, dynamic>> patch(
+    String path, {
+    RequestAuth auth = RequestAuth.none,
+    Map<String, dynamic>? body,
+  }) async {
+    final uri = Uri.parse("$_baseUrl$path");
+
+    final response = await http.patch(
+      uri,
+      headers: await _headers(auth),
+      body: jsonEncode(body ?? {}),
+    );
+
+    return _decode(response);
+  }
+
   Future<Map<String, dynamic>> delete(
     String path, {
     RequestAuth auth = RequestAuth.none,

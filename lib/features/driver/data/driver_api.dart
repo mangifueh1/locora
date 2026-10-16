@@ -57,6 +57,14 @@ class DriverApi {
     );
   }
 
+  Future<void> updateLoad(int load) async {
+    await _api.patch(
+      '/api/v1/drivers/me/load',
+      auth: RequestAuth.driver,
+      body: {'load': load},
+    );
+  }
+
   Future<Delivery> deliveryDetail(String id) async {
     final result = await _api.get(
       '/api/v1/deliveries/$id',

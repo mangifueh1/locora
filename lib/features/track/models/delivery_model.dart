@@ -21,6 +21,8 @@ class DeliveryModel {
     required this.customerLocation,
     required this.driverLocation,
     required this.assignment,
+    this.driverName,
+    this.driverPhone,
     this.updatedAt,
   });
 
@@ -31,6 +33,8 @@ class DeliveryModel {
   final DeliveryLocation? customerLocation;
   final DeliveryLocation? driverLocation;
   final String assignment;
+  final String? driverName;
+  final String? driverPhone;
   final DateTime? updatedAt;
 
   factory DeliveryModel.fromJson(Map<String, dynamic> json) {
@@ -56,6 +60,12 @@ class DeliveryModel {
           ? DeliveryLocation.fromJson(driver)
           : null,
       assignment: json['assignment']?.toString() ?? 'still_to_be_assigned',
+      driverName: driver is Map<String, dynamic>
+          ? driver['name']?.toString()
+          : null,
+      driverPhone: driver is Map<String, dynamic>
+          ? driver['phone']?.toString()
+          : null,
       updatedAt: DateTime.tryParse(json['updated_at']?.toString() ?? ''),
     );
   }

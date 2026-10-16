@@ -30,6 +30,8 @@ class LocoraFooter extends StatelessWidget {
     final loginPressed = onLoginPressed ?? () => context.go('/login');
     final getStartedPressed =
         onGetStartedPressed ?? () => context.go('/business/register');
+    final privacyPressed = onPrivacyPressed ?? () => context.go('/privacy');
+    final termsPressed = onTermsPressed ?? () => context.go('/terms');
 
     return Container(
       decoration: BoxDecoration(
@@ -60,8 +62,8 @@ class LocoraFooter extends StatelessWidget {
                       onContactPressed: contactPressed,
                       onLoginPressed: loginPressed,
                       onGetStartedPressed: getStartedPressed,
-                      onPrivacyPressed: onPrivacyPressed,
-                      onTermsPressed: onTermsPressed,
+                      onPrivacyPressed: privacyPressed,
+                      onTermsPressed: termsPressed,
                     ),
                   ],
                 );
@@ -77,8 +79,8 @@ class LocoraFooter extends StatelessWidget {
                     onContactPressed: contactPressed,
                     onLoginPressed: loginPressed,
                     onGetStartedPressed: getStartedPressed,
-                    onPrivacyPressed: onPrivacyPressed,
-                    onTermsPressed: onTermsPressed,
+                    onPrivacyPressed: privacyPressed,
+                    onTermsPressed: termsPressed,
                   ),
                 ],
               );

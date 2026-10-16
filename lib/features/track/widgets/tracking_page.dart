@@ -17,6 +17,8 @@ class TrackingPage extends ConsumerStatefulWidget {
     required this.updatedAt,
     required this.customerLocation,
     required this.driverLocation,
+    this.driverName,
+    this.driverPhone,
     this.isDriver = false,
     this.isSharing = false,
     this.isActionLoading = false,
@@ -31,6 +33,8 @@ class TrackingPage extends ConsumerStatefulWidget {
   final String status;
   final String businessName;
   final String assignment;
+  final String? driverName;
+  final String? driverPhone;
   final DateTime? updatedAt;
   final LatLng? customerLocation;
   final LatLng? driverLocation;
@@ -47,6 +51,8 @@ class TrackingPage extends ConsumerStatefulWidget {
 }
 
 class _TrackingPageState extends ConsumerState<TrackingPage> {
+  bool _isSatellite = false;
+
   @override
   void initState() {
     super.initState();
@@ -87,6 +93,8 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
       assignment: widget.assignment,
       updatedAt: widget.updatedAt,
       isDriver: widget.isDriver,
+      driverName: widget.driverName,
+      driverPhone: widget.driverPhone,
     );
     final actions = widget.isDriver
         ? DriverTrackingActions(
@@ -136,6 +144,7 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
             customerLocation: widget.customerLocation,
             driverLocation: widget.driverLocation,
             routeGeometry: routeState.geometry,
+            isSatellite: _isSatellite,
           ),
         ),
         SafeArea(
@@ -149,7 +158,23 @@ class _TrackingPageState extends ConsumerState<TrackingPage> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     details,
-                    const SizedBox(height: 8),
+                    if (widget.isDriver) ...[
+                      const SizedBox(height: 8),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: OutlinedButton.icon(
+                          onPressed: () =>
+                              setState(() => _isSatellite = !_isSatellite),
+                          icon: Icon(
+                            _isSatellite
+                                ? Icons.map_outlined
+                                : Icons.satellite_alt_outlined,
+                          ),
+                          label: Text(_isSatellite ? 'Streets' : 'Satellite'),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                     const TrackingMapKey(),
                   ],
                 ),

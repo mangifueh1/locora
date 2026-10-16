@@ -34,6 +34,7 @@ void main() {
 
     expect(find.text('Business Name'), findsNothing);
     expect(find.text('Phone Number'), findsOneWidget);
+    expect(find.text('+237'), findsOneWidget);
     expect(find.text('Password'), findsOneWidget);
     expect(find.text('Forgot password?'), findsNothing);
 
@@ -49,6 +50,50 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Send link'), findsOneWidget);
+  });
+
+  testWidgets('driver login submits the selected country code and number', (
+    tester,
+  ) async {
+    final authApi = _RecordingDriverLoginAuthApi();
+    final router = GoRouter(
+      routes: [GoRoute(path: '/', builder: (_, _) => const LoginScreen())],
+    );
+    addTearDown(router.dispose);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [authApiProvider.overrideWith((ref) => authApi)],
+        child: MaterialApp.router(routerConfig: router),
+      ),
+    );
+
+    await tester.tap(find.text('Driver'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextFormField).first, '600000001');
+    expect(authApi.submittedPhone, isNull);
+
+    await tester.tap(find.text('+237'));
+    await tester.pumpAndSettle();
+    final countrySearch = find.descendant(
+      of: find.byType(Dialog),
+      matching: find.byType(TextField),
+    );
+    await tester.enterText(countrySearch, 'United States');
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('United States').last);
+    await tester.pumpAndSettle();
+
+    await tester.enterText(
+      _textFieldWithHint('Enter your password'),
+      'password123',
+    );
+    await tester.ensureVisible(find.text('Log In ->'));
+    await tester.tap(find.text('Log In ->'));
+    await tester.pumpAndSettle();
+
+    expect(authApi.submittedPhone, '+1600000001');
+    expect(find.text('Test login rejected'), findsOneWidget);
   });
 
   testWidgets(
@@ -90,6 +135,10 @@ void main() {
   );
 }
 
+Finder _textFieldWithHint(String hint) => find.byWidgetPredicate(
+  (widget) => widget is TextField && widget.decoration?.hintText == hint,
+);
+
 class _UnverifiedBusinessAuthApi extends AuthApi {
   _UnverifiedBusinessAuthApi()
     : super(
@@ -112,5 +161,26 @@ class _UnverifiedBusinessAuthApi extends AuthApi {
   @override
   Future<void> resendBusinessVerification({required String email}) async {
     resentEmail = email;
+  }
+}
+
+class _RecordingDriverLoginAuthApi extends AuthApi {
+  _RecordingDriverLoginAuthApi()
+    : super(
+        ApiClient(
+          baseUrl: 'https://example.invalid',
+          tokenStorage: TokenStorage(),
+        ),
+      );
+
+  String? submittedPhone;
+
+  @override
+  Future<AuthLoginResponse> loginDriver({
+    required String phone,
+    required String password,
+  }) async {
+    submittedPhone = phone;
+    throw ApiExeption('Test login rejected', 401);
   }
 }

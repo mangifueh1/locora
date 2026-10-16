@@ -1,4 +1,5 @@
 import 'package:locora/core/network/api_client.dart';
+import 'package:locora/features/business/models/business_profile.dart';
 import 'package:locora/features/driver/models/delivery.dart';
 import 'package:locora/features/driver/models/driver.dart';
 
@@ -7,18 +8,12 @@ class BusinessApi {
 
   final ApiClient _api;
 
-  Future<String> businessId() async {
+  Future<BusinessProfile> profile() async {
     final result = await _api.get(
-      '/api/v1/businesses/me/api-key',
+      '/api/v1/businesses/me',
       auth: RequestAuth.business,
     );
-    final businessId = result['business_id']?.toString();
-    if (businessId == null || businessId.isEmpty) {
-      throw const FormatException(
-        'Business ID was not returned by the server.',
-      );
-    }
-    return businessId;
+    return BusinessProfile.fromJson(result);
   }
 
   Future<List<Driver>> drivers() async {

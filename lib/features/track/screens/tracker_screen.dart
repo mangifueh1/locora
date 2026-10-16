@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:locora/core/network/connectivity_provider.dart';
 import 'package:locora/features/driver/providers/driver_providers.dart';
 import 'package:locora/features/driver/providers/live_delivery_controller.dart';
 import 'package:locora/features/track/models/delivery_model.dart';
@@ -60,6 +61,12 @@ class _TrackerScreenState extends ConsumerState<TrackerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final connectivity = ref.watch(deviceConnectivityProvider);
+    final isOffline = connectivity.when(
+      data: (isConnected) => !isConnected,
+      error: (_, _) => false,
+      loading: () => false,
+    );
     final token = widget.token;
     final deliveryId = widget.deliveryId;
     if ((token == null) == (deliveryId == null) ||
@@ -75,18 +82,23 @@ class _TrackerScreenState extends ConsumerState<TrackerScreen> {
     if (token != null) {
       final tracking = ref.watch(trackingProvider(token));
       return Scaffold(
-        body: tracking.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) => TrackingError(error: error),
-          data: (delivery) => TrackingPage(
-            deliveryId: delivery.id,
-            orderId: delivery.orderId,
-            status: delivery.status,
-            businessName: delivery.businessName,
-            assignment: delivery.assignment,
-            updatedAt: delivery.updatedAt,
-            customerLocation: _toLatLng(delivery.customerLocation),
-            driverLocation: _toLatLng(delivery.driverLocation),
+        body: _trackingBody(
+          isOffline: isOffline,
+          content: tracking.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, _) => TrackingError(error: error),
+            data: (delivery) => TrackingPage(
+              deliveryId: delivery.id,
+              orderId: delivery.orderId,
+              status: delivery.status,
+              businessName: delivery.businessName,
+              assignment: delivery.assignment,
+              driverName: delivery.driverName,
+              driverPhone: delivery.driverPhone,
+              updatedAt: delivery.updatedAt,
+              customerLocation: _toLatLng(delivery.customerLocation),
+              driverLocation: _toLatLng(delivery.driverLocation),
+            ),
           ),
         ),
       );
@@ -95,43 +107,57 @@ class _TrackerScreenState extends ConsumerState<TrackerScreen> {
     final delivery = ref.watch(driverDeliveryDetailProvider(deliveryId!));
     final tracking = ref.watch(liveDeliveryControllerProvider(deliveryId));
     return Scaffold(
-      body: delivery.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => TrackingError(error: error),
-        data: (item) => TrackingPage(
-          deliveryId: item.id,
-          orderId: item.orderId,
-          status: item.status,
-          businessName: item.businessName ?? 'Delivery details',
-          assignment: 'Assigned to you',
-          updatedAt: item.updatedAt,
-          customerLocation: _toLatLng(
-            item.customerLat == null || item.customerLng == null
-                ? null
-                : DeliveryLocation(
-                    latitude: item.customerLat!,
-                    longitude: item.customerLng!,
-                  ),
+      body: _trackingBody(
+        isOffline: isOffline,
+        content: delivery.when(
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (error, _) => TrackingError(error: error),
+          data: (item) => TrackingPage(
+            deliveryId: item.id,
+            orderId: item.orderId,
+            status: item.status,
+            businessName: item.businessName ?? 'Delivery details',
+            assignment: 'Assigned to you',
+            updatedAt: item.updatedAt,
+            customerLocation: _toLatLng(
+              item.customerLat == null || item.customerLng == null
+                  ? null
+                  : DeliveryLocation(
+                      latitude: item.customerLat!,
+                      longitude: item.customerLng!,
+                    ),
+            ),
+            driverLocation: _toLatLng(
+              item.driverLat == null || item.driverLng == null
+                  ? null
+                  : DeliveryLocation(
+                      latitude: item.driverLat!,
+                      longitude: item.driverLng!,
+                    ),
+            ),
+            isDriver: true,
+            isSharing: tracking.isSharing,
+            isActionLoading: tracking.isLoading,
+            actionError: tracking.error,
+            onStart: () => _runDriverAction(resume: false),
+            onResume: () => _runDriverAction(resume: true),
+            onComplete: _completeDelivery,
           ),
-          driverLocation: _toLatLng(
-            item.driverLat == null || item.driverLng == null
-                ? null
-                : DeliveryLocation(
-                    latitude: item.driverLat!,
-                    longitude: item.driverLng!,
-                  ),
-          ),
-          isDriver: true,
-          isSharing: tracking.isSharing,
-          isActionLoading: tracking.isLoading,
-          actionError: tracking.error,
-          onStart: () => _runDriverAction(resume: false),
-          onResume: () => _runDriverAction(resume: true),
-          onComplete: _completeDelivery,
         ),
       ),
     );
   }
+
+  Widget _trackingBody({required bool isOffline, required Widget content}) =>
+      SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (isOffline) const _OfflineTrackingBanner(),
+            Expanded(child: content),
+          ],
+        ),
+      );
 
   Future<void> _runDriverAction({required bool resume}) async {
     final deliveryId = widget.deliveryId;
@@ -152,6 +178,40 @@ class _TrackerScreenState extends ConsumerState<TrackerScreen> {
     if (deliveryId == null) return;
     await ref.read(liveDeliveryControllerProvider(deliveryId).notifier).stop();
     if (mounted) ref.invalidate(driverDeliveryDetailProvider(deliveryId));
+  }
+}
+
+class _OfflineTrackingBanner extends StatelessWidget {
+  const _OfflineTrackingBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+
+    return Semantics(
+      liveRegion: true,
+      child: Material(
+        color: colors.errorContainer,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Row(
+            children: [
+              Icon(Icons.wifi_off_rounded, color: colors.onErrorContainer),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  'No active connection. Connect to Wi-Fi or mobile data to keep tracking.',
+                  style: TextStyle(
+                    color: colors.onErrorContainer,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

@@ -35,11 +35,19 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
   final _descriptionController = TextEditingController();
   final _notesController = TextEditingController();
   final _locationService = LocationService();
+  bool _isLoadingSavedLocation = true;
+  bool _showMap = false;
+  DeliveryLocation? _savedLocation;
+  Object? _savedLocationError;
 
   @override
   void initState() {
     super.initState();
-    _loadCurrentLocation();
+    if (widget.isPreview) {
+      _showMap = true;
+    } else {
+      _loadSavedLocation();
+    }
   }
 
   @override
@@ -71,6 +79,50 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
     });
   }
 
+  Future<void> _loadSavedLocation() async {
+    try {
+      final location = await ref
+          .read(pickerApiProvider)
+          .getSavedLocation(token: widget.token);
+      if (!mounted) return;
+
+      setState(() {
+        _savedLocation = location;
+        _savedLocationError = null;
+        _isLoadingSavedLocation = false;
+        _showMap = location == null;
+      });
+      if (location == null) await _loadCurrentLocation();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _savedLocationError = error;
+        _isLoadingSavedLocation = false;
+      });
+    }
+  }
+
+  void _chooseNewLocation() {
+    final savedLocation = _savedLocation;
+    setState(() {
+      _showMap = true;
+      _descriptionController.text = savedLocation?.addressDescription ?? '';
+      if (savedLocation != null) {
+        _center = LatLng(savedLocation.latitude, savedLocation.longitude);
+        _zoom = 15;
+      }
+    });
+    if (savedLocation == null) _loadCurrentLocation();
+  }
+
+  void _retrySavedLocationLoad() {
+    setState(() {
+      _isLoadingSavedLocation = true;
+      _savedLocationError = null;
+    });
+    _loadSavedLocation();
+  }
+
   void _zoomIn() {
     setState(() => _zoom = (_zoom + 1).clamp(5, 20).toDouble());
   }
@@ -89,16 +141,34 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
       return;
     }
 
+    await _submitLocation(
+      DeliveryLocation(
+        latitude: _center.latitude,
+        longitude: _center.longitude,
+        addressDescription: _descriptionController.text,
+      ),
+    );
+  }
+
+  Future<void> _useSavedLocation() async {
+    final location = _savedLocation;
+    if (location == null) return;
+    await _submitLocation(location);
+  }
+
+  Future<void> _submitLocation(DeliveryLocation location) async {
     final result = await ref
         .read(pickerControllerProvider(widget.token).notifier)
-        .confirm(
-          DeliveryLocation(
-            latitude: _center.latitude,
-            longitude: _center.longitude,
-          ),
-        );
+        .confirm(location);
 
-    if (!mounted || result == null) return;
+    if (!mounted) return;
+    if (result == null) {
+      final error = ref.read(pickerControllerProvider(widget.token)).error;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error?.toString() ?? 'Unable to save location')),
+      );
+      return;
+    }
 
     final trackingLink = result['tracking_link']?.toString();
     markPickerCompleted(widget.token, trackingLink);
@@ -112,6 +182,18 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(pickerControllerProvider(widget.token));
+    if (!_showMap) {
+      if (_isLoadingSavedLocation) {
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      }
+      if (_savedLocationError != null) {
+        return _buildSavedLocationError();
+      }
+      if (_savedLocation != null) {
+        return _buildSavedLocationChoice(state);
+      }
+    }
+
     final coordinates =
         '${_center.latitude.toStringAsFixed(5)}, ${_center.longitude.toStringAsFixed(5)}';
 
@@ -191,6 +273,170 @@ class _LocationPickerScreenState extends ConsumerState<LocationPickerScreen> {
             ],
           );
         },
+      ),
+    );
+  }
+
+  Widget _buildSavedLocationChoice(AsyncValue<void> state) {
+    final location = _savedLocation!;
+    final description = location.addressDescription?.trim();
+    final coordinates =
+        '${location.latitude.toStringAsFixed(5)}, ${location.longitude.toStringAsFixed(5)}';
+    final colors = Theme.of(context).colorScheme;
+
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.home_outlined, size: 30, color: colors.primary),
+                  const SizedBox(height: 18),
+                  Text(
+                    'Use your saved address?',
+                    style: Theme.of(context).textTheme.headlineSmall
+                        ?.copyWith(fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Choose your saved delivery location or pick a new one.',
+                    style: Theme.of(context).textTheme.bodyLarge
+                        ?.copyWith(color: colors.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 22),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: colors.surfaceContainerLow,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: colors.outlineVariant),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(Icons.location_on_outlined, color: colors.primary),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                description?.isNotEmpty == true
+                                    ? description!
+                                    : 'Saved delivery location',
+                                style: Theme.of(context).textTheme.titleMedium
+                                    ?.copyWith(fontWeight: FontWeight.w600),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                coordinates,
+                                style: Theme.of(context).textTheme.bodySmall
+                                    ?.copyWith(color: colors.onSurfaceVariant),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (state.hasError) ...[
+                    const SizedBox(height: 12),
+                    Text(
+                      state.error.toString(),
+                      style: TextStyle(color: colors.error),
+                    ),
+                  ],
+                  const SizedBox(height: 22),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: FilledButton.icon(
+                      onPressed: state.isLoading ? null : _useSavedLocation,
+                      icon: state.isLoading
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
+                          : const Icon(Icons.check),
+                      label: Text(
+                        state.isLoading
+                            ? 'Confirming location'
+                            : 'Use saved location',
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: state.isLoading ? null : _chooseNewLocation,
+                      icon: const Icon(Icons.edit_location_alt_outlined),
+                      label: const Text('Choose a new location'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSavedLocationError() {
+    final colors = Theme.of(context).colorScheme;
+    return Scaffold(
+      body: SafeArea(
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 440),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.location_searching, size: 36, color: colors.error),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Could not check for a saved address',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    _savedLocationError.toString(),
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium
+                        ?.copyWith(color: colors.onSurfaceVariant),
+                  ),
+                  const SizedBox(height: 20),
+                  FilledButton.icon(
+                    onPressed: _retrySavedLocationLoad,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: _chooseNewLocation,
+                    icon: const Icon(Icons.edit_location_alt_outlined),
+                    label: const Text('Choose a new location'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

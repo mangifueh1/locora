@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -55,12 +56,14 @@ class TrackerMap extends StatefulWidget {
     this.customerLocation,
     this.driverLocation,
     this.routeGeometry,
+    this.isSatellite = false,
   });
 
   final LatLng center;
   final LatLng? customerLocation;
   final LatLng? driverLocation;
   final List<LatLng>? routeGeometry;
+  final bool isSatellite;
 
   @override
   State<TrackerMap> createState() => _TrackerMapState();
@@ -146,13 +149,30 @@ class _TrackerMapState extends State<TrackerMap> {
   @override
   void didUpdateWidget(covariant TrackerMap oldWidget) {
     super.didUpdateWidget(oldWidget);
+    if (oldWidget.isSatellite != widget.isSatellite) {
+      _layerReady = false;
+      unawaited(_loadStyle());
+      return;
+    }
     _syncMapFeatures();
+  }
+
+  Future<void> _loadStyle() async {
+    final map = _map;
+    if (map == null) return;
+    await map.loadStyleURI(
+      widget.isSatellite
+          ? MapboxStyles.STANDARD_SATELLITE
+          : MapboxStyles.MAPBOX_STREETS,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return MapWidget(
-      styleUri: MapboxStyles.MAPBOX_STREETS,
+      styleUri: widget.isSatellite
+          ? MapboxStyles.STANDARD_SATELLITE
+          : MapboxStyles.MAPBOX_STREETS,
       viewport: CameraViewportState(
         center: Point(
           coordinates: Position(

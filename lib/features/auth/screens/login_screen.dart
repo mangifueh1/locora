@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:locora/core/network/api_client.dart';
 import 'package:locora/features/auth/widgets/role_tab.dart';
+import 'package:locora/features/auth/widgets/driver_phone_field.dart';
 
 import 'package:locora/features/auth/providers/auth_providers.dart';
 import 'package:locora/features/business/providers/business_providers.dart';
 import 'package:locora/features/driver/providers/driver_providers.dart';
 import 'package:locora/shared/theme/app_colors.dart';
 import 'package:locora/shared/widgets/buttons.dart';
+import 'package:locora/shared/widgets/locora_dialog.dart';
 import 'package:locora/shared/widgets/navbar.dart';
 import 'package:locora/shared/widgets/locora_text_field.dart';
 
@@ -28,6 +30,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
   final _businessName = TextEditingController();
   final _driverPhone = TextEditingController();
+  String _driverPhoneNumber = '';
   final _businessPassword = TextEditingController();
   final _driverPassword = TextEditingController();
 
@@ -90,7 +93,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       } else {
         final result = await ref
             .read(authApiProvider)
-            .loginDriver(phone: _name.text.trim(), password: _password.text);
+            .loginDriver(phone: _driverPhoneNumber, password: _password.text);
         await ref.read(driverSessionProvider).saveToken(result.token);
 
         if (!mounted) return;
@@ -121,34 +124,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         String? error;
 
         return StatefulBuilder(
-          builder: (context, setDialogState) => AlertDialog(
-            backgroundColor: AppColors.surfaceContainerLowest,
-            surfaceTintColor: Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(6),
-              side: BorderSide(color: AppColors.outlineVariant),
-            ),
-            titlePadding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-            contentPadding: const EdgeInsets.fromLTRB(24, 8, 24, 8),
-            actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-            title: Row(
-              children: [
-                Icon(
-                  sent ? Icons.mark_email_read_outlined : Icons.lock_reset,
-                  color: AppColors.primary,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    sent ? 'Check your email' : 'Reset your password',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: AppColors.onSurface,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          builder: (context, setDialogState) => LocoraDialog(
+            title: Text(sent ? 'Check your email' : 'Reset your password'),
+            icon: sent ? Icons.mark_email_read_outlined : Icons.lock_reset,
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -275,33 +253,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         String? error;
 
         return StatefulBuilder(
-          builder: (context, setDialogState) => AlertDialog(
-            backgroundColor: AppColors.surfaceContainerLowest,
-            surfaceTintColor: Colors.transparent,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(6),
-              side: BorderSide(color: AppColors.outlineVariant),
+          builder: (context, setDialogState) => LocoraDialog(
+            title: Text(
+              sent ? 'Check your email' : 'Resend verification email',
             ),
-            title: Row(
-              children: [
-                Icon(
-                  sent
-                      ? Icons.mark_email_read_outlined
-                      : Icons.mark_email_unread_outlined,
-                  color: AppColors.primary,
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    sent ? 'Check your email' : 'Resend verification email',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: AppColors.onSurface,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            icon: sent
+                ? Icons.mark_email_read_outlined
+                : Icons.mark_email_unread_outlined,
             content: Column(
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -482,24 +440,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   : 'Log in to view and manage your deliveries.',
                             ),
                             SizedBox(height: 24),
-                            LocoraTextField(
-                              label: isBusiness
-                                  ? 'Business Name'
-                                  : 'Phone Number',
-                              hint: isBusiness
-                                  ? 'Acme Logistics, Metro Mart, etc.'
-                                  : '+1 555 123 4567',
-                              controller: _name,
-                              suffix: Icon(
-                                isBusiness
-                                    ? Icons.business_outlined
-                                    : Icons.phone_outlined,
+                            if (isBusiness)
+                              LocoraTextField(
+                                label: 'Business Name',
+                                hint: 'Acme Logistics, Metro Mart, etc.',
+                                controller: _businessName,
+                                suffix: const Icon(Icons.business_outlined),
+                                textInputAction: TextInputAction.next,
+                              )
+                            else
+                              DriverPhoneField(
+                                controller: _driverPhone,
+                                onChanged: (phone) =>
+                                    _driverPhoneNumber = phone,
+                                textInputAction: TextInputAction.next,
                               ),
-                              keyboardType: isBusiness
-                                  ? null
-                                  : TextInputType.phone,
-                              textInputAction: TextInputAction.next,
-                            ),
                             LocoraTextField(
                               label: 'Password',
                               hint: 'Enter your password',

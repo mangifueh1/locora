@@ -20,12 +20,12 @@ class DashboardMetricCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.all(18),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 13),
       decoration: BoxDecoration(
         color: colors.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: colors.outlineVariant.withValues(alpha: 0.55),
+        borderRadius: BorderRadius.circular(7),
+        border: Border(
+          left: BorderSide(color: accent, width: 3),
         ),
       ),
       child: Column(
@@ -38,25 +38,36 @@ class DashboardMetricCard extends StatelessWidget {
                   label.toUpperCase(),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: colors.onSurfaceVariant,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 0.7,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 0.35,
                   ),
                 ),
               ),
-              Icon(icon, color: accent, size: 21),
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: accent.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                child: Icon(icon, color: accent, size: 17),
+              ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 5),
           Text(
             value,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               color: colors.onSurface,
               fontWeight: FontWeight.w700,
+              height: 1.05,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 5),
           Text(
             detail,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
             style: Theme.of(context).textTheme.bodySmall
                 ?.copyWith(color: colors.onSurfaceVariant),
           ),

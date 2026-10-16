@@ -51,6 +51,15 @@ class _DriverDashboardScreenState extends ConsumerState<DriverDashboardScreen> {
   Future<void> _claimDelivery(String deliveryId) async {
     setState(() => _busyDeliveryIds.add(deliveryId));
     try {
+      final activeDeliveryCount = ref
+          .read(driverAvailableDeliveriesProvider)
+          .asData
+          ?.value
+          .activeDeliveryCount;
+      if (activeDeliveryCount == null) {
+        throw StateError('Current driver load is not available.');
+      }
+
       final position = await ref
           .read(driverLocationServiceProvider)
           .getCurrentPosition();
@@ -68,6 +77,16 @@ class _DriverDashboardScreenState extends ConsumerState<DriverDashboardScreen> {
             longitude: position.longitude,
           );
       _invalidateDeliveryLists();
+      try {
+        await ref.read(driverApiProvider).updateLoad(activeDeliveryCount + 1);
+      } catch (error) {
+        if (mounted) {
+          _showMessage(
+            'Delivery claimed, but driver load could not be updated: $error',
+          );
+        }
+        return;
+      }
       _showMessage('Delivery claimed.');
     } catch (error) {
       if (mounted) _showMessage('Could not claim delivery: $error');
