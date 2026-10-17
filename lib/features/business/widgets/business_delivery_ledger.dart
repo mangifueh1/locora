@@ -164,53 +164,82 @@ class _BusinessDeliveryLedgerState extends State<BusinessDeliveryLedger> {
                     ?.copyWith(color: colors.onSurfaceVariant),
               ),
             )
-          else if (wide)
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                headingRowHeight: 40,
-                dataRowMinHeight: 52,
-                dataRowMaxHeight: 60,
-                horizontalMargin: 8,
-                columnSpacing: 24,
-                headingTextStyle: Theme.of(context).textTheme.labelSmall
-                    ?.copyWith(
-                      color: colors.onSurfaceVariant,
-                      fontWeight: FontWeight.w700,
+          else
+            LayoutBuilder(
+              builder: (context, constraints) {
+                if (constraints.maxWidth < 740) {
+                  return Column(
+                    children: [
+                      for (final delivery in deliveries)
+                        _CompactDeliveryRow(delivery: delivery),
+                    ],
+                  );
+                }
+
+                return DataTable(
+                  headingRowHeight: 40,
+                  dataRowMinHeight: 52,
+                  dataRowMaxHeight: 60,
+                  horizontalMargin: 8,
+                  columnSpacing: 24,
+                  headingTextStyle: Theme.of(context).textTheme.labelSmall
+                      ?.copyWith(
+                        color: colors.onSurfaceVariant,
+                        fontWeight: FontWeight.w700,
+                      ),
+                  columns: const [
+                    DataColumn(
+                      columnWidth: FlexColumnWidth(1.2),
+                      label: Text('ORDER ID'),
                     ),
-                columns: const [
-                  DataColumn(label: Text('ORDER ID')),
-                  DataColumn(label: Text('BUSINESS')),
-                  DataColumn(label: Text('STATUS')),
-                  DataColumn(label: Text('LAST UPDATED')),
-                ],
-                rows: [
-                  for (final delivery in deliveries)
-                    DataRow(
-                      cells: [
-                        DataCell(
-                          Text(
-                            delivery.orderId,
-                            style: TextStyle(
-                              color: colors.primary,
-                              fontWeight: FontWeight.w600,
+                    DataColumn(
+                      columnWidth: FlexColumnWidth(1.4),
+                      label: Text('BUSINESS'),
+                    ),
+                    DataColumn(
+                      columnWidth: FlexColumnWidth(1),
+                      label: Text('STATUS'),
+                    ),
+                    DataColumn(
+                      columnWidth: FlexColumnWidth(1.4),
+                      label: Text('LAST UPDATED'),
+                    ),
+                  ],
+                  rows: [
+                    for (final delivery in deliveries)
+                      DataRow(
+                        cells: [
+                          DataCell(
+                            Text(
+                              delivery.orderId,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: TextStyle(
+                                color: colors.primary,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ),
-                        ),
-                        DataCell(Text(delivery.businessName ?? '—')),
-                        DataCell(_DeliveryStatus(status: delivery.status)),
-                        DataCell(Text(_formatTimestamp(delivery.updatedAt))),
-                      ],
-                    ),
-                ],
-              ),
-            )
-          else
-            Column(
-              children: [
-                for (final delivery in deliveries)
-                  _CompactDeliveryRow(delivery: delivery),
-              ],
+                          DataCell(
+                            Text(
+                              delivery.businessName ?? '—',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          DataCell(_DeliveryStatus(status: delivery.status)),
+                          DataCell(
+                            Text(
+                              _formatTimestamp(delivery.updatedAt),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                );
+              },
             ),
           const SizedBox(height: 10),
           Text(
